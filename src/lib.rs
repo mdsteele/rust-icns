@@ -8,8 +8,10 @@
 extern crate byteorder;
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use std::fmt;
 use std::io::{self, Read, Write};
+
+mod icontype;
+pub use self::icontype::{IconType, OSType};
 
 /// The first four bytes of an ICNS file:
 const ICNS_MAGIC_LITERAL: &'static [u8; 4] = b"icns";
@@ -31,22 +33,6 @@ pub struct IconFamily {
 pub struct IconElement {
     ostype: OSType,
     data: Vec<u8>,
-}
-
-/// A Macintosh OSType (also known as a ResType), used in ICNS files to
-/// identify the type of each icon element.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct OSType(pub [u8; 4]);
-
-impl fmt::Display for OSType {
-    fn fmt(&self, out: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        let &OSType(raw) = self;
-        for &byte in &raw {
-            let character = std::char::from_u32(u32::from(byte)).unwrap();
-            try!(write!(out, "{}", character));
-        }
-        Ok(())
-    }
 }
 
 impl IconFamily {
@@ -113,9 +99,15 @@ impl IconElement {
         }
     }
 
-    /// Returns the raw OSType for this element (e.g. `it32` or `t8mk`).
+    /// Returns the OSType for this element (e.g. `it32` or `t8mk`).
     pub fn ostype(&self) -> OSType {
         self.ostype
+    }
+
+    /// Returns the type of icon encoded by this element, or `None` if this
+    /// element does not encode a supported icon type.
+    pub fn icon_type(&self) -> Option<IconType> {
+        IconType::from_ostype(self.ostype)
     }
 
     /// Returns the encoded data for this element.
