@@ -13,6 +13,9 @@ use std::io::{self, Read, Write};
 mod icontype;
 pub use self::icontype::{IconType, OSType};
 
+mod image;
+pub use self::image::{Image, PixelFormat};
+
 /// The first four bytes of an ICNS file:
 const ICNS_MAGIC_LITERAL: &'static [u8; 4] = b"icns";
 
