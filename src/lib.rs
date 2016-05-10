@@ -6,6 +6,7 @@
 #![warn(missing_docs)]
 
 extern crate byteorder;
+extern crate png;
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::io::{self, Read, Write};

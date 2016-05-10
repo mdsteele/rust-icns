@@ -74,17 +74,39 @@ impl IconType {
     /// assert_eq!(IconType::RGBA32_256x256_2x.pixel_width(), 512);
     /// ```
     pub fn pixel_width(self) -> u32 {
+        self.screen_width() * self.pixel_density()
+    }
+
+    /// Returns the pixel data height of this icon type.  Normally this is the
+    /// same as the screen height, but for 2x "retina" density icons, this will
+    /// be twice that value.
+    ///
+    /// # Examples
+    /// ```
+    /// use icns::IconType;
+    /// assert_eq!(IconType::Mask8_128x128.pixel_height(), 128);
+    /// assert_eq!(IconType::RGBA32_256x256.pixel_height(), 256);
+    /// assert_eq!(IconType::RGBA32_256x256_2x.pixel_height(), 512);
+    /// ```
+    pub fn pixel_height(self) -> u32 {
+        self.screen_height() * self.pixel_density()
+    }
+
+    /// Returns the pixel density for this icon type -- that is, 2 for 2x
+    /// "retina" density icons, or 1 for other icon types.
+    ///
+    /// # Examples
+    /// ```
+    /// use icns::IconType;
+    /// assert_eq!(IconType::Mask8_128x128.pixel_density(), 1);
+    /// assert_eq!(IconType::RGBA32_256x256.pixel_density(), 1);
+    /// assert_eq!(IconType::RGBA32_256x256_2x.pixel_density(), 2);
+    /// ```
+    pub fn pixel_density(self) -> u32 {
         match self {
-            IconType::RGB24_16x16 => 16,
-            IconType::Mask8_16x16 => 16,
-            IconType::RGB24_32x32 => 32,
-            IconType::Mask8_32x32 => 32,
-            IconType::RGB24_128x128 => 128,
-            IconType::Mask8_128x128 => 128,
-            IconType::RGBA32_256x256 => 256,
-            IconType::RGBA32_256x256_2x => 512,
-            IconType::RGBA32_512x512 => 512,
-            IconType::RGBA32_512x512_2x => 1024,
+            IconType::RGBA32_256x256_2x => 2,
+            IconType::RGBA32_512x512_2x => 2,
+            _ => 1,
         }
     }
 
@@ -100,6 +122,32 @@ impl IconType {
     /// assert_eq!(IconType::RGBA32_256x256_2x.screen_width(), 256);
     /// ```
     pub fn screen_width(self) -> u32 {
+        match self {
+            IconType::RGB24_16x16 => 16,
+            IconType::Mask8_16x16 => 16,
+            IconType::RGB24_32x32 => 32,
+            IconType::Mask8_32x32 => 32,
+            IconType::RGB24_128x128 => 128,
+            IconType::Mask8_128x128 => 128,
+            IconType::RGBA32_256x256 => 256,
+            IconType::RGBA32_256x256_2x => 256,
+            IconType::RGBA32_512x512 => 512,
+            IconType::RGBA32_512x512_2x => 512,
+        }
+    }
+
+    /// Returns the screen height of this icon type.  Normally this is the same
+    /// as the pixel height, but for 2x "retina" density icons, this will be
+    /// half that value.
+    ///
+    /// # Examples
+    /// ```
+    /// use icns::IconType;
+    /// assert_eq!(IconType::Mask8_128x128.screen_height(), 128);
+    /// assert_eq!(IconType::RGBA32_256x256.screen_height(), 256);
+    /// assert_eq!(IconType::RGBA32_256x256_2x.screen_height(), 256);
+    /// ```
+    pub fn screen_height(self) -> u32 {
         match self {
             IconType::RGB24_16x16 => 16,
             IconType::Mask8_16x16 => 16,

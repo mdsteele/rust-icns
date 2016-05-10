@@ -5,3 +5,4 @@ authors = ["Matthew D. Steele <mdsteele@alum.mit.edu>"]
 
 [dependencies]
 byteorder = "0.5"
+png = "0.5"
