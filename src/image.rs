@@ -25,7 +25,7 @@ impl Image {
         }
     }
 
-    /// Creates a copy of this image using a the specified pixel format.  This
+    /// Creates a copy of this image using the specified pixel format.  This
     /// operation always succeeds, but may lose information (e.g. converting
     /// from RGBA to RGB will silently drop the alpha channel).  If the source
     /// image is already in the requested format, this is equivalant to simply
