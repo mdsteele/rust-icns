@@ -13,6 +13,10 @@ pub enum IconType {
     RGB24_32x32,
     /// 32x32 8-bit alpha mask.
     Mask8_32x32,
+    /// 48x48 24-bit icon (without alpha).
+    RGB24_48x48,
+    /// 48x48 8-bit alpha mask.
+    Mask8_48x48,
     /// 128x128 24-bit icon (without alpha).
     RGB24_128x128,
     /// 128x128 8-bit alpha mask.
@@ -51,6 +55,8 @@ impl IconType {
             b"s8mk" => Some(IconType::Mask8_16x16),
             b"il32" => Some(IconType::RGB24_32x32),
             b"l8mk" => Some(IconType::Mask8_32x32),
+            b"ih32" => Some(IconType::RGB24_48x48),
+            b"h8mk" => Some(IconType::Mask8_48x48),
             b"it32" => Some(IconType::RGB24_128x128),
             b"t8mk" => Some(IconType::Mask8_128x128),
             b"icp4" => Some(IconType::RGBA32_16x16),
@@ -75,6 +81,8 @@ impl IconType {
             IconType::Mask8_16x16 => OSType(*b"s8mk"),
             IconType::RGB24_32x32 => OSType(*b"il32"),
             IconType::Mask8_32x32 => OSType(*b"l8mk"),
+            IconType::RGB24_48x48 => OSType(*b"ih32"),
+            IconType::Mask8_48x48 => OSType(*b"h8mk"),
             IconType::RGB24_128x128 => OSType(*b"it32"),
             IconType::Mask8_128x128 => OSType(*b"t8mk"),
             IconType::RGBA32_16x16 => OSType(*b"icp4"),
@@ -159,6 +167,8 @@ impl IconType {
             IconType::Mask8_16x16 => 16,
             IconType::RGB24_32x32 => 32,
             IconType::Mask8_32x32 => 32,
+            IconType::RGB24_48x48 => 48,
+            IconType::Mask8_48x48 => 48,
             IconType::RGB24_128x128 => 128,
             IconType::Mask8_128x128 => 128,
             IconType::RGBA32_16x16 => 16,
@@ -192,6 +202,8 @@ impl IconType {
             IconType::Mask8_16x16 => 16,
             IconType::RGB24_32x32 => 32,
             IconType::Mask8_32x32 => 32,
+            IconType::RGB24_48x48 => 48,
+            IconType::Mask8_48x48 => 48,
             IconType::RGB24_128x128 => 128,
             IconType::Mask8_128x128 => 128,
             IconType::RGBA32_16x16 => 16,
@@ -213,9 +225,11 @@ impl IconType {
         match self {
             IconType::RGB24_16x16 |
             IconType::RGB24_32x32 |
+            IconType::RGB24_48x48 |
             IconType::RGB24_128x128 => Encoding::RLE24,
             IconType::Mask8_16x16 |
             IconType::Mask8_32x32 |
+            IconType::Mask8_48x48 |
             IconType::Mask8_128x128 => Encoding::Mask8,
             IconType::RGBA32_16x16 |
             IconType::RGBA32_16x16_2x |
@@ -285,6 +299,8 @@ mod tests {
                           IconType::Mask8_16x16,
                           IconType::RGB24_32x32,
                           IconType::Mask8_32x32,
+                          IconType::RGB24_48x48,
+                          IconType::Mask8_48x48,
                           IconType::RGB24_128x128,
                           IconType::Mask8_128x128,
                           IconType::RGBA32_16x16,

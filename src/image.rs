@@ -25,21 +25,51 @@ impl Image {
         }
     }
 
-    /// Creates a copy of this image using the RGBA pixel format (that is,
-    /// `foo.to_rgba().pixel_format()` will always return `PixelFormat::RGBA`).
-    /// If the source image is already in RGBA format, this is equivalant to
-    /// simply calling `clone()`.
-    pub fn to_rgba(&self) -> Image {
-        let rgba_data = match self.format {
-            PixelFormat::RGBA => self.data.clone(),
-            PixelFormat::RGB => rgb_to_rgba(&self.data),
-            PixelFormat::Grayscale => grayscale_to_rgba(&self.data),
+    /// Creates a copy of this image using a the specified pixel format.  This
+    /// operation always succeeds, but may lose information (e.g. converting
+    /// from RGBA to RGB will silently drop the alpha channel).  If the source
+    /// image is already in the requested format, this is equivalant to simply
+    /// calling `clone()`.
+    pub fn convert_to(&self, format: PixelFormat) -> Image {
+        let new_data = match self.format {
+            PixelFormat::RGBA => {
+                match format {
+                    PixelFormat::RGBA => self.data.clone(),
+                    PixelFormat::RGB => rgba_to_rgb(&self.data),
+                    PixelFormat::Grayscale => rgba_to_grayscale(&self.data),
+                    PixelFormat::Alpha => rgba_to_alpha(&self.data),
+                }
+            }
+            PixelFormat::RGB => {
+                match format {
+                    PixelFormat::RGBA => rgb_to_rgba(&self.data),
+                    PixelFormat::RGB => self.data.clone(),
+                    PixelFormat::Grayscale => rgb_to_grayscale(&self.data),
+                    PixelFormat::Alpha => rgb_to_alpha(&self.data),
+                }
+            }
+            PixelFormat::Grayscale => {
+                match format {
+                    PixelFormat::RGBA => grayscale_to_rgba(&self.data),
+                    PixelFormat::RGB => grayscale_to_rgb(&self.data),
+                    PixelFormat::Grayscale => self.data.clone(),
+                    PixelFormat::Alpha => grayscale_to_alpha(&self.data),
+                }
+            }
+            PixelFormat::Alpha => {
+                match format {
+                    PixelFormat::RGBA => alpha_to_rgba(&self.data),
+                    PixelFormat::RGB => alpha_to_rgb(&self.data),
+                    PixelFormat::Grayscale => alpha_to_grayscale(&self.data),
+                    PixelFormat::Alpha => self.data.clone(),
+                }
+            }
         };
         Image {
-            format: PixelFormat::RGBA,
+            format: format,
             width: self.width,
             height: self.height,
-            data: rgba_data,
+            data: new_data,
         }
     }
 
@@ -66,6 +96,11 @@ impl Image {
             PixelFormat::RGBA => png::ColorType::RGBA,
             PixelFormat::RGB => png::ColorType::RGB,
             PixelFormat::Grayscale => png::ColorType::Grayscale,
+            PixelFormat::Alpha => {
+                // TODO: Add grayscale-with-alpha pixel format so we can be
+                // less wasteful here.
+                return self.convert_to(PixelFormat::RGBA).write_png(output);
+            }
         };
         let mut encoder = png::Encoder::new(output, self.width, self.height);
         encoder.set(color_type).set(png::BitDepth::Eight);
@@ -116,6 +151,8 @@ pub enum PixelFormat {
     RGB,
     /// 8-bit grayscale with no alpha.
     Grayscale,
+    /// 8-bit alpha mask with no color.
+    Alpha,
 }
 
 impl PixelFormat {
@@ -126,8 +163,20 @@ impl PixelFormat {
             PixelFormat::RGBA => 32,
             PixelFormat::RGB => 24,
             PixelFormat::Grayscale => 8,
+            PixelFormat::Alpha => 8,
         }
     }
+}
+
+/// Converts RGBA image data into RGB.
+fn rgba_to_rgb(rgba: &[u8]) -> Box<[u8]> {
+    assert_eq!(rgba.len() % 4, 0);
+    let num_pixels = rgba.len() / 4;
+    let mut rgb = Vec::with_capacity(num_pixels * 3);
+    for i in 0..num_pixels {
+        rgb.extend_from_slice(&rgba[(4 * i)..(4 * i + 3)]);
+    }
+    rgb.into_boxed_slice()
 }
 
 /// Converts RGB image data into RGBA.
@@ -140,6 +189,52 @@ fn rgb_to_rgba(rgb: &[u8]) -> Box<[u8]> {
         rgba.push(std::u8::MAX);
     }
     rgba.into_boxed_slice()
+}
+
+/// Converts RGBA image data into grayscale.
+fn rgba_to_grayscale(rgba: &[u8]) -> Box<[u8]> {
+    assert_eq!(rgba.len() % 4, 0);
+    let num_pixels = rgba.len() / 4;
+    let mut gray = Vec::with_capacity(num_pixels);
+    for i in 0..num_pixels {
+        let red = u32::from(rgba[4 * i]);
+        let green = u32::from(rgba[4 * i + 1]);
+        let blue = u32::from(rgba[4 * i + 2]);
+        gray.push(((red + green + blue) / 3) as u8);
+    }
+    gray.into_boxed_slice()
+}
+
+/// Converts RGB image data into grayscale.
+fn rgb_to_grayscale(rgb: &[u8]) -> Box<[u8]> {
+    assert_eq!(rgb.len() % 3, 0);
+    let num_pixels = rgb.len() / 3;
+    let mut gray = Vec::with_capacity(num_pixels);
+    for i in 0..num_pixels {
+        let red = u32::from(rgb[3 * i]);
+        let green = u32::from(rgb[3 * i + 1]);
+        let blue = u32::from(rgb[3 * i + 2]);
+        gray.push(((red + green + blue) / 3) as u8);
+    }
+    gray.into_boxed_slice()
+}
+
+/// Converts RGBA image data into an alpha mask.
+fn rgba_to_alpha(rgba: &[u8]) -> Box<[u8]> {
+    assert_eq!(rgba.len() % 4, 0);
+    let num_pixels = rgba.len() / 4;
+    let mut alpha = Vec::with_capacity(num_pixels);
+    for i in 0..num_pixels {
+        alpha.push(rgba[4 * i + 3]);
+    }
+    alpha.into_boxed_slice()
+}
+
+/// Converts RGB image data into an alpha mask.
+fn rgb_to_alpha(rgb: &[u8]) -> Box<[u8]> {
+    assert_eq!(rgb.len() % 3, 0);
+    let num_pixels = rgb.len() / 3;
+    vec![std::u8::MAX; num_pixels].into_boxed_slice()
 }
 
 /// Converts grayscale image data into RGBA.
@@ -155,6 +250,46 @@ fn grayscale_to_rgba(gray: &[u8]) -> Box<[u8]> {
     rgba.into_boxed_slice()
 }
 
+/// Converts grayscale image data into RGB.
+fn grayscale_to_rgb(gray: &[u8]) -> Box<[u8]> {
+    let num_pixels = gray.len();
+    let mut rgb = Vec::with_capacity(num_pixels * 3);
+    for &value in gray {
+        rgb.push(value);
+        rgb.push(value);
+        rgb.push(value);
+    }
+    rgb.into_boxed_slice()
+}
+
+/// Converts grayscale image data into an alpha mask.
+fn grayscale_to_alpha(gray: &[u8]) -> Box<[u8]> {
+    vec![std::u8::MAX; gray.len()].into_boxed_slice()
+}
+
+/// Converts alpha mask image data into RGBA.
+fn alpha_to_rgba(alpha: &[u8]) -> Box<[u8]> {
+    let num_pixels = alpha.len();
+    let mut rgba = Vec::with_capacity(num_pixels * 4);
+    for &value in alpha {
+        rgba.push(0);
+        rgba.push(0);
+        rgba.push(0);
+        rgba.push(value);
+    }
+    rgba.into_boxed_slice()
+}
+
+/// Converts alpha mask image data into RGB.
+fn alpha_to_rgb(alpha: &[u8]) -> Box<[u8]> {
+    vec![0u8; alpha.len() * 3].into_boxed_slice()
+}
+
+/// Converts alpha mask image data into grayscale.
+fn alpha_to_grayscale(alpha: &[u8]) -> Box<[u8]> {
+    vec![0u8; alpha.len()].into_boxed_slice()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -165,7 +300,7 @@ mod tests {
         let gray_data: Vec<u8> = vec![63, 127, 191, 255];
         let mut gray_image = Image::new(PixelFormat::Grayscale, 2, 2);
         gray_image.data_mut().clone_from_slice(&gray_data);
-        let rgba_image = gray_image.to_rgba();
+        let rgba_image = gray_image.convert_to(PixelFormat::RGBA);
         assert_eq!(rgba_image.pixel_format(), PixelFormat::RGBA);
         assert_eq!(rgba_image.width(), 2);
         assert_eq!(rgba_image.height(), 2);
@@ -180,7 +315,7 @@ mod tests {
                                      127, 127];
         let mut rgb_image = Image::new(PixelFormat::RGB, 2, 2);
         rgb_image.data_mut().clone_from_slice(&rgb_data);
-        let rgba_image = rgb_image.to_rgba();
+        let rgba_image = rgb_image.convert_to(PixelFormat::RGBA);
         assert_eq!(rgba_image.pixel_format(), PixelFormat::RGBA);
         assert_eq!(rgba_image.width(), 2);
         assert_eq!(rgba_image.height(), 2);

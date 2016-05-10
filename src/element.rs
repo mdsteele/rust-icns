@@ -2,7 +2,7 @@ use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::io::{self, Cursor, Read, Write};
 
 use super::icontype::{Encoding, IconType, OSType};
-use super::image::Image;
+use super::image::{Image, PixelFormat};
 
 /// The length of an icon element header, in bytes:
 const ICON_ELEMENT_HEADER_LENGTH: u32 = 8;
@@ -29,26 +29,40 @@ impl IconElement {
     /// if the data is malformed.
     pub fn decode_image(&self) -> io::Result<Image> {
         if let Some(icon_type) = self.icon_type() {
+            let width = icon_type.pixel_width();
+            let height = icon_type.pixel_width();
             match icon_type.encoding() {
                 Encoding::JP2PNG => {
                     // TODO: Detect/Decode JPEG 2000 images.
                     let image = try!(Image::read_png(Cursor::new(&self.data)));
-                    if image.width() != icon_type.pixel_width() ||
-                       image.height() != icon_type.pixel_height() {
+                    if image.width() != width || image.height() != height {
                         Err(io::Error::new(io::ErrorKind::InvalidData,
                                            format!("decoded PNG has wrong \
                                                     dimensions ({}x{} \
                                                     instead of {}x{})",
                                                    image.width(),
                                                    image.height(),
-                                                   icon_type.pixel_width(),
-                                                   icon_type.pixel_height())))
+                                                   width,
+                                                   height)))
                     } else {
                         Ok(image)
                     }
                 }
+                Encoding::Mask8 => {
+                    if self.data.len() as u32 != width * height {
+                        Err(io::Error::new(io::ErrorKind::InvalidData,
+                                           "wrong data payload length"))
+
+                    } else {
+                        let mut image = Image::new(PixelFormat::Alpha,
+                                                   width,
+                                                   height);
+                        image.data_mut().clone_from_slice(&self.data);
+                        Ok(image)
+                    }
+                }
                 _ => {
-                    // TODO: Support RLE and mask icons.
+                    // TODO: Support RLE-encoded icons.
                     Err(io::Error::new(io::ErrorKind::InvalidInput,
                                        format!("unsupported icon type: {:?}",
                                                icon_type)))
