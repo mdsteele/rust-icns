@@ -77,14 +77,27 @@ impl Image {
     pub fn read_png<R: Read>(input: R) -> io::Result<Image> {
         let decoder = png::Decoder::new(input);
         let (info, mut reader) = try!(decoder.read_info());
-        if info.color_type != png::ColorType::RGBA ||
-           info.bit_depth != png::BitDepth::Eight {
-            // TODO: Support other color types and bit depths.
+        let pixel_format = match info.color_type {
+            png::ColorType::RGBA => PixelFormat::RGBA,
+            png::ColorType::RGB => PixelFormat::RGB,
+            png::ColorType::Grayscale => PixelFormat::Grayscale,
+            _ => {
+                // TODO: Support other color types.
+                return Err(io::Error::new(io::ErrorKind::InvalidData,
+                                          format!("unsupported PNG color \
+                                                   type: {:?}",
+                                                  info.color_type)));
+            }
+        };
+        if info.bit_depth != png::BitDepth::Eight {
+            // TODO: Support other bit depths.
             return Err(io::Error::new(io::ErrorKind::InvalidData,
-                                      "unsupport PNG format"));
+                                      format!("unsupported PNG bit depth: \
+                                               {:?}",
+                                              info.bit_depth)));
 
         }
-        let mut image = Image::new(PixelFormat::RGBA, info.width, info.height);
+        let mut image = Image::new(pixel_format, info.width, info.height);
         assert_eq!(image.data().len(), info.buffer_size());
         try!(reader.next_frame(image.data_mut()));
         Ok(image)
@@ -398,5 +411,34 @@ mod tests {
         let rgba_data: Vec<u8> = vec![255, 0, 0, 63, 0, 255, 0, 127, 0, 0,
                                       255, 191, 127, 127, 127, 255];
         assert_eq!(image.data(), &rgba_data as &[u8]);
+    }
+
+    #[test]
+    fn png_round_trip() {
+        let rgba_data: Vec<u8> = vec![127, 0, 0, 63, 0, 191, 0, 127, 0, 0,
+                                      255, 191, 127, 127, 127, 255];
+        let mut rgba_image = Image::new(PixelFormat::RGBA, 2, 2);
+        rgba_image.data_mut().clone_from_slice(&rgba_data);
+        let pixel_formats = [PixelFormat::RGBA,
+                             PixelFormat::RGB,
+                             PixelFormat::Grayscale,
+                             PixelFormat::Alpha];
+        for &format in pixel_formats.iter() {
+            // For each pixel format, try writing a PNG from an image in that
+            // format.
+            let image_1 = rgba_image.convert_to(format);
+            let mut png_data = Vec::<u8>::new();
+            image_1.write_png(&mut png_data).expect("failed to write PNG");
+            // We should be able to read the PNG back in successfully.
+            let mut image_2 = Image::read_png(Cursor::new(&png_data))
+                                  .expect("failed to read PNG");
+            // We may get the image back in a different pixel format.  However,
+            // in such cases we should be able to convert back to the original
+            // pixel format and still get back exactly the same data.
+            if image_2.pixel_format() != image_1.pixel_format() {
+                image_2 = image_2.convert_to(image_1.pixel_format());
+            }
+            assert_eq!(image_1.data(), image_2.data());
+        }
     }
 }
