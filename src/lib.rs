@@ -11,8 +11,11 @@ extern crate png;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::io::{self, Read, Write};
 
+mod element;
+pub use self::element::IconElement;
+
 mod icontype;
-pub use self::icontype::{IconType, OSType};
+pub use self::icontype::{Encoding, IconType, OSType};
 
 mod image;
 pub use self::image::{Image, PixelFormat};
@@ -23,20 +26,9 @@ const ICNS_MAGIC_LITERAL: &'static [u8; 4] = b"icns";
 /// The length of an icon family header, in bytes:
 const ICON_FAMILY_HEADER_LENGTH: u32 = 8;
 
-/// The length of an icon element header, in bytes:
-const ICON_ELEMENT_HEADER_LENGTH: u32 = 8;
-
 /// A set of icons stored in a single ICNS file.
 pub struct IconFamily {
     elements: Vec<IconElement>,
-}
-
-/// One entry in an ICNS file.  Depending on the resource type, this may
-/// represent an icon, or part of an icon (such as an alpha mask, or color
-/// data without the mask).
-pub struct IconElement {
-    ostype: OSType,
-    data: Vec<u8>,
 }
 
 impl IconFamily {
@@ -57,15 +49,15 @@ impl IconFamily {
 
     /// Returns the encoded length of the file, in bytes, including the
     /// length of the header.
-    fn length(&self) -> u32 {
+    pub fn total_length(&self) -> u32 {
         let mut length = ICON_FAMILY_HEADER_LENGTH;
         for element in &self.elements {
-            length += element.length();
+            length += element.total_length();
         }
         length
     }
 
-    /// Reads an icon family from an ICNS file (or other reader).
+    /// Reads an icon family from an ICNS file.
     pub fn read<R: Read>(mut reader: R) -> io::Result<IconFamily> {
         let mut magic = [0u8; 4];
         try!(reader.read_exact(&mut magic));
@@ -77,74 +69,19 @@ impl IconFamily {
         let mut family = IconFamily::new();
         while file_position < file_length {
             let element = try!(IconElement::read(reader.by_ref()));
-            file_position += element.length();
+            file_position += element.total_length();
             family.add_element(element);
         }
         Ok(family)
     }
 
-    /// Writes the icon family to an ICNS file (or other writer).
+    /// Writes the icon family to an ICNS file.
     pub fn write<W: Write>(&self, mut writer: W) -> io::Result<()> {
         try!(writer.write_all(ICNS_MAGIC_LITERAL));
-        try!(writer.write_u32::<BigEndian>(self.length()));
+        try!(writer.write_u32::<BigEndian>(self.total_length()));
         for element in &self.elements {
             try!(element.write(writer.by_ref()));
         }
-        Ok(())
-    }
-}
-
-impl IconElement {
-    /// Creates an icon element with the given OSType and data payload.
-    pub fn new(ostype: OSType, data: Vec<u8>) -> IconElement {
-        IconElement {
-            ostype: ostype,
-            data: data,
-        }
-    }
-
-    /// Returns the OSType for this element (e.g. `it32` or `t8mk`).
-    pub fn ostype(&self) -> OSType {
-        self.ostype
-    }
-
-    /// Returns the type of icon encoded by this element, or `None` if this
-    /// element does not encode a supported icon type.
-    pub fn icon_type(&self) -> Option<IconType> {
-        IconType::from_ostype(self.ostype)
-    }
-
-    /// Returns the encoded data for this element.
-    pub fn data(&self) -> &[u8] {
-        &self.data
-    }
-
-    /// Returns the encoded length of the element, in bytes, including the
-    /// length of the header.
-    fn length(&self) -> u32 {
-        ICON_ELEMENT_HEADER_LENGTH + (self.data.len() as u32)
-    }
-
-    /// Reads an icon element from an ICNS file (or other reader).
-    fn read<R: Read>(mut reader: R) -> io::Result<IconElement> {
-        let mut raw_ostype = [0u8; 4];
-        try!(reader.read_exact(&mut raw_ostype));
-        let element_length = try!(reader.read_u32::<BigEndian>());
-        if element_length < ICON_ELEMENT_HEADER_LENGTH {
-            return read_error("invalid element length");
-        }
-        let data_length = element_length - ICON_ELEMENT_HEADER_LENGTH;
-        let mut data = vec![0u8; data_length as usize];
-        try!(reader.read_exact(&mut data));
-        Ok(IconElement::new(OSType(raw_ostype), data))
-    }
-
-    /// Writes the icon element into an ICNS file (or other writer).
-    fn write<W: Write>(&self, mut writer: W) -> io::Result<()> {
-        let OSType(ref raw_ostype) = self.ostype;
-        try!(writer.write_all(raw_ostype));
-        try!(writer.write_u32::<BigEndian>(self.length()));
-        try!(writer.write_all(&self.data));
         Ok(())
     }
 }

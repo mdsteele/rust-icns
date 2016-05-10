@@ -161,6 +161,22 @@ impl IconType {
             IconType::RGBA32_512x512_2x => 512,
         }
     }
+
+    /// Returns the encoding used within an ICNS file for this icon type.
+    pub fn encoding(self) -> Encoding {
+        match self {
+            IconType::RGB24_16x16 |
+            IconType::RGB24_32x32 |
+            IconType::RGB24_128x128 => Encoding::RLE24,
+            IconType::Mask8_16x16 |
+            IconType::Mask8_32x32 |
+            IconType::Mask8_128x128 => Encoding::Mask8,
+            IconType::RGBA32_256x256 |
+            IconType::RGBA32_256x256_2x |
+            IconType::RGBA32_512x512 |
+            IconType::RGBA32_512x512_2x => Encoding::JP2PNG,
+        }
+    }
 }
 
 /// A Macintosh OSType (also known as a ResType), used in ICNS files to
@@ -179,9 +195,36 @@ impl fmt::Display for OSType {
     }
 }
 
+impl std::str::FromStr for OSType {
+    type Err = String;
+
+    fn from_str(input: &str) -> Result<OSType, String> {
+        let bytes = input.as_bytes();
+        if bytes.len() != 4 {
+            Err(format!("OSType string must be 4 bytes (was {})", bytes.len()))
+        } else {
+            let mut raw = [0u8; 4];
+            raw.clone_from_slice(bytes);
+            Ok(OSType(raw))
+        }
+    }
+}
+
+/// Method of encoding an image within an icon element.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum Encoding {
+    /// Icon element data payload is an uncompressed 8-bit alpha mask.
+    Mask8,
+    /// Icon element data payload is an RLE-compressed 24-bit RGB image.
+    RLE24,
+    /// Icon element data payload is a JPEG 2000 or PNG file.
+    JP2PNG,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::str::FromStr;
 
     #[test]
     fn icon_type_ostype_round_trip() {
@@ -200,5 +243,19 @@ mod tests {
             let from = IconType::from_ostype(ostype);
             assert_eq!(Some(*icon_type), from);
         }
+    }
+
+    #[test]
+    fn ostype_to_and_from_str() {
+        let ostype = OSType::from_str("abcd").expect("failed to parse OSType");
+        assert_eq!(ostype.to_string(), "abcd".to_string());
+    }
+
+    #[test]
+    fn ostype_from_str_failure() {
+        assert_eq!(OSType::from_str("abc"),
+                   Err("OSType string must be 4 bytes (was 3)".to_string()));
+        assert_eq!(OSType::from_str("abcde"),
+                   Err("OSType string must be 4 bytes (was 5)".to_string()));
     }
 }
