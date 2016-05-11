@@ -278,7 +278,7 @@ mod tests {
 
     #[test]
     fn encode_rle() {
-        let mut image = Image::new(PixelFormat::Grayscale, 16, 16);
+        let mut image = Image::new(PixelFormat::Gray, 16, 16);
         image.data_mut()[0] = 44;
         image.data_mut()[1] = 55;
         image.data_mut()[2] = 66;
