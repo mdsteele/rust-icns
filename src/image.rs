@@ -153,6 +153,11 @@ impl Image {
     pub fn data_mut(&mut self) -> &mut [u8] {
         &mut self.data
     }
+
+    /// Consumes the image, returning the data array without cloning it.
+    pub fn into_data(self) -> Box<[u8]> {
+        self.data
+    }
 }
 
 /// A format for storing pixel data in an image.

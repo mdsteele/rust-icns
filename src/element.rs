@@ -1,4 +1,5 @@
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use std::cmp;
 use std::io::{self, Cursor, Error, ErrorKind, Read, Write};
 
 use super::icontype::{Encoding, IconType, OSType};
@@ -22,6 +23,57 @@ impl IconElement {
             ostype: ostype,
             data: data,
         }
+    }
+
+    /// Creates an icon element that encodes the given image as the given icon
+    /// type.  Returns an error if the image has the wrong dimensions for that
+    /// icon type.
+    pub fn encode_image_with_type(image: &Image,
+                                  icon_type: IconType)
+                                  -> io::Result<IconElement> {
+        let width = icon_type.pixel_width();
+        let height = icon_type.pixel_height();
+        if image.width() != width || image.height() != height {
+            let msg = format!("image has wrong dimensions for {:?} ({}x{} \
+                               instead of {}x{}))",
+                              icon_type,
+                              image.width(),
+                              image.height(),
+                              width,
+                              height);
+            return Err(Error::new(ErrorKind::InvalidInput, msg));
+        }
+        let mut data: Vec<u8>;
+        match icon_type.encoding() {
+            Encoding::JP2PNG => {
+                data = Vec::new();
+                try!(image.write_png(&mut data));
+            }
+            Encoding::RLE24 => {
+                let num_pixels = (width * height) as usize;
+                match image.pixel_format() {
+                    PixelFormat::RGBA => {
+                        data = encode_rle(image.data(), 4, num_pixels);
+                    }
+                    PixelFormat::RGB => {
+                        data = encode_rle(image.data(), 3, num_pixels);
+                    }
+                    // Convert to RGB if the image isn't already RGB or RGBA.
+                    _ => {
+                        let image = image.convert_to(PixelFormat::RGB);
+                        data = encode_rle(image.data(), 3, num_pixels);
+                    }
+                }
+            }
+            Encoding::Mask8 => {
+                // Convert to Alpha format unconditionally -- if the image is
+                // already Alpha format, this will simply clone its data array,
+                // which we'd need to do anyway.
+                let image = image.convert_to(PixelFormat::Alpha);
+                data = image.into_data().into_vec();
+            }
+        }
+        Ok(IconElement::new(icon_type.ostype(), data))
     }
 
     /// Decodes the icon element into an image.  Returns an error if this
@@ -51,7 +103,7 @@ impl IconElement {
             }
             Encoding::RLE24 => {
                 let mut image = Image::new(PixelFormat::RGB, width, height);
-                try!(decode_rle_rgb(&self.data, image.data_mut()));
+                try!(decode_rle(&self.data, image.data_mut()));
                 Ok(image)
             }
             Encoding::Mask8 => {
@@ -117,7 +169,57 @@ impl IconElement {
     }
 }
 
-fn decode_rle_rgb(input: &[u8], output: &mut [u8]) -> io::Result<()> {
+fn encode_rle(input: &[u8],
+              num_input_channels: usize,
+              num_pixels: usize)
+              -> Vec<u8> {
+    assert!(num_input_channels == 3 || num_input_channels == 4);
+    let mut output = Vec::with_capacity(num_pixels);
+    for channel in 0..3 {
+        let mut pixel: usize = 0;
+        let mut literal_start: usize = 0;
+        while pixel < num_pixels {
+            let value = input[num_input_channels * pixel + channel];
+            let mut run_length = 1;
+            while pixel + run_length < num_pixels &&
+                  input[num_input_channels * (pixel + run_length) +
+                        channel] == value &&
+                  run_length < 130 {
+                run_length += 1;
+            }
+            if run_length >= 3 {
+                while literal_start < pixel {
+                    let literal_length = cmp::min(256, pixel - literal_start);
+                    output.push((literal_length - 1) as u8);
+                    for i in 0..literal_length {
+                        output.push(input[num_input_channels *
+                                          (literal_start + i) +
+                                          channel]);
+                    }
+                    literal_start += literal_length;
+                }
+                output.push((run_length + 125) as u8);
+                output.push(value);
+                pixel += run_length;
+                literal_start = pixel;
+            } else {
+                pixel += run_length;
+            }
+        }
+        while literal_start < pixel {
+            let literal_length = cmp::min(256, pixel - literal_start);
+            output.push((literal_length - 1) as u8);
+            for i in 0..literal_length {
+                output.push(input[num_input_channels * (literal_start + i) +
+                                  channel]);
+            }
+            literal_start += literal_length;
+        }
+    }
+    output
+}
+
+fn decode_rle(input: &[u8], output: &mut [u8]) -> io::Result<()> {
     assert_eq!(output.len() % 3, 0);
     let num_pixels = output.len() / 3;
     let mut iter = input.iter();
@@ -162,8 +264,23 @@ fn rle_error() -> Error {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use super::super::icontype::OSType;
-    use super::super::image::PixelFormat;
+    use super::super::icontype::{IconType, OSType};
+    use super::super::image::{Image, PixelFormat};
+
+    #[test]
+    fn encode_rle() {
+        let mut image = Image::new(PixelFormat::Grayscale, 16, 16);
+        image.data_mut()[0] = 44;
+        image.data_mut()[1] = 55;
+        image.data_mut()[2] = 66;
+        image.data_mut()[3] = 66;
+        image.data_mut()[4] = 66;
+        let element =
+            IconElement::encode_image_with_type(&image, IconType::RGB24_16x16)
+                .expect("failed to encode image");
+        assert_eq!(element.ostype(), OSType(*b"is32"));
+        assert_eq!(element.data()[0..5], [1, 44, 55, 128, 66]);
+    }
 
     #[test]
     fn decode_rle() {
@@ -177,6 +294,17 @@ mod tests {
         assert_eq!(image.data()[0], 12);
         assert_eq!(image.data()[1], 34);
         assert_eq!(image.data()[2], 56);
+    }
+
+    #[test]
+    fn encode_mask() {
+        let mut image = Image::new(PixelFormat::Alpha, 16, 16);
+        image.data_mut()[2] = 127;
+        let element =
+            IconElement::encode_image_with_type(&image, IconType::Mask8_16x16)
+                .expect("failed to encode image");
+        assert_eq!(element.ostype(), OSType(*b"s8mk"));
+        assert_eq!(element.data()[2], 127);
     }
 
     #[test]
