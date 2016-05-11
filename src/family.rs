@@ -1,5 +1,5 @@
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use std::io::{self, Read, Write};
+use std::io::{self, Error, ErrorKind, Read, Write};
 
 use super::element::IconElement;
 
@@ -11,23 +11,14 @@ const ICON_FAMILY_HEADER_LENGTH: u32 = 8;
 
 /// A set of icons stored in a single ICNS file.
 pub struct IconFamily {
-    elements: Vec<IconElement>,
+    /// The icon elements stored in the ICNS file.
+    pub elements: Vec<IconElement>,
 }
 
 impl IconFamily {
     /// Creates a new, empty icon family.
     pub fn new() -> IconFamily {
         IconFamily { elements: Vec::new() }
-    }
-
-    /// Returns the icon elements in the family.
-    pub fn elements(&self) -> &[IconElement] {
-        &self.elements
-    }
-
-    /// Add an icon element to the family.
-    pub fn add_element(&mut self, element: IconElement) {
-        self.elements.push(element);
     }
 
     /// Returns the encoded length of the file, in bytes, including the
@@ -45,7 +36,8 @@ impl IconFamily {
         let mut magic = [0u8; 4];
         try!(reader.read_exact(&mut magic));
         if magic != *ICNS_MAGIC_LITERAL {
-            return read_error("not an icns file (wrong magic literal)");
+            let msg = "not an icns file (wrong magic literal)";
+            return Err(Error::new(ErrorKind::InvalidData, msg));
         }
         let file_length = try!(reader.read_u32::<BigEndian>());
         let mut file_position: u32 = ICON_FAMILY_HEADER_LENGTH;
@@ -53,7 +45,7 @@ impl IconFamily {
         while file_position < file_length {
             let element = try!(IconElement::read(reader.by_ref()));
             file_position += element.total_length();
-            family.add_element(element);
+            family.elements.push(element);
         }
         Ok(family)
     }
@@ -69,10 +61,6 @@ impl IconFamily {
     }
 }
 
-fn read_error<T>(msg: &str) -> io::Result<T> {
-    Err(io::Error::new(io::ErrorKind::InvalidData, msg))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -83,7 +71,7 @@ mod tests {
     #[test]
     fn write_empty_icon_family() {
         let family = IconFamily::new();
-        assert_eq!(0, family.elements().len());
+        assert_eq!(0, family.elements.len());
         let mut output: Vec<u8> = vec![];
         family.write(&mut output).expect("write failed");
         assert_eq!(b"icns\0\0\0\x08", &output as &[u8]);
@@ -94,19 +82,20 @@ mod tests {
         let input: Cursor<&[u8]> =
             Cursor::new(b"icns\0\0\0\x1fquux\0\0\0\x0efoobarbaz!\0\0\0\x09#");
         let family = IconFamily::read(input).expect("read failed");
-        assert_eq!(2, family.elements().len());
-        assert_eq!(OSType(*b"quux"), family.elements()[0].ostype());
-        assert_eq!(6, family.elements()[0].data().len());
-        assert_eq!(OSType(*b"baz!"), family.elements()[1].ostype());
-        assert_eq!(1, family.elements()[1].data().len());
+        assert_eq!(2, family.elements.len());
+        assert_eq!(OSType(*b"quux"), family.elements[0].ostype);
+        assert_eq!(6, family.elements[0].data.len());
+        assert_eq!(OSType(*b"baz!"), family.elements[1].ostype);
+        assert_eq!(1, family.elements[1].data.len());
     }
 
     #[test]
     fn write_icon_family_with_fake_elements() {
         let mut family = IconFamily::new();
-        family.add_element(IconElement::new(OSType(*b"quux"),
-                                            b"foobar".to_vec()));
-        family.add_element(IconElement::new(OSType(*b"baz!"), b"#".to_vec()));
+        family.elements
+              .push(IconElement::new(OSType(*b"quux"), b"foobar".to_vec()));
+        family.elements
+              .push(IconElement::new(OSType(*b"baz!"), b"#".to_vec()));
         let mut output: Vec<u8> = vec![];
         family.write(&mut output).expect("write failed");
         assert_eq!(b"icns\0\0\0\x1fquux\0\0\0\x0efoobarbaz!\0\0\0\x09#",

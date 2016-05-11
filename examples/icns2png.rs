@@ -19,9 +19,9 @@ fn main() {
                                        .expect("failed to open ICNS file"));
     let family = IconFamily::read(icns_file)
                      .expect("failed to read ICNS file");
-    let element = family.elements()
+    let element = family.elements
                         .iter()
-                        .find(|el| el.ostype() == ostype)
+                        .find(|el| el.ostype == ostype)
                         .expect("no element with that OSType found");
     let image = element.decode_image().expect("failed to decode image");
     let png_path = icns_path.with_extension(format!("{}.png", ostype));

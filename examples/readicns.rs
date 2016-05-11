@@ -14,9 +14,11 @@ fn main() {
     let file = File::open(path).expect("failed to open file");
     let buffered = BufReader::new(file);
     let family = IconFamily::read(buffered).expect("failed to read ICNS file");
-    println!("ICNS file contains {} element(s).", family.elements().len());
-    for (index, element) in family.elements().iter().enumerate() {
+    println!("ICNS file contains {} element(s).", family.elements.len());
+    for (index, element) in family.elements.iter().enumerate() {
         println!("Element {}: {} ({} byte payload)",
-                 index, element.ostype(), element.data().len());
+                 index,
+                 element.ostype,
+                 element.data.len());
     }
 }

@@ -17,8 +17,10 @@ const JPEG_2000_FILE_MAGIC_NUMBER: [u8; 12] = [0x00, 0x00, 0x00, 0x0C, 0x6A,
 /// represent an icon, or part of an icon (such as an alpha mask, or color
 /// data without the mask).
 pub struct IconElement {
-    ostype: OSType,
-    data: Vec<u8>,
+    /// The OSType for this element (e.g. `it32` or `t8mk`).
+    pub ostype: OSType,
+    /// The raw data payload for this element.
+    pub data: Vec<u8>,
 }
 
 impl IconElement {
@@ -87,7 +89,7 @@ impl IconElement {
     pub fn decode_image(&self) -> io::Result<Image> {
         let icon_type = try!(self.icon_type().ok_or_else(|| {
             Error::new(ErrorKind::InvalidInput,
-                       format!("unsupported OSType: {}", self.ostype()))
+                       format!("unsupported OSType: {}", self.ostype))
         }));
         let width = icon_type.pixel_width();
         let height = icon_type.pixel_width();
@@ -131,20 +133,10 @@ impl IconElement {
         }
     }
 
-    /// Returns the OSType for this element (e.g. `it32` or `t8mk`).
-    pub fn ostype(&self) -> OSType {
-        self.ostype
-    }
-
     /// Returns the type of icon encoded by this element, or `None` if this
     /// element does not encode a supported icon type.
     pub fn icon_type(&self) -> Option<IconType> {
         IconType::from_ostype(self.ostype)
-    }
-
-    /// Returns the encoded data for this element.
-    pub fn data(&self) -> &[u8] {
-        &self.data
     }
 
     /// Returns the encoded length of the element, in bytes, including the
@@ -295,8 +287,8 @@ mod tests {
         let element =
             IconElement::encode_image_with_type(&image, IconType::RGB24_16x16)
                 .expect("failed to encode image");
-        assert_eq!(element.ostype(), OSType(*b"is32"));
-        assert_eq!(element.data()[0..5], [1, 44, 55, 128, 66]);
+        assert_eq!(element.ostype, OSType(*b"is32"));
+        assert_eq!(element.data[0..5], [1, 44, 55, 128, 66]);
     }
 
     #[test]
@@ -331,8 +323,8 @@ mod tests {
         let element =
             IconElement::encode_image_with_type(&image, IconType::Mask8_16x16)
                 .expect("failed to encode image");
-        assert_eq!(element.ostype(), OSType(*b"s8mk"));
-        assert_eq!(element.data()[2], 127);
+        assert_eq!(element.ostype, OSType(*b"s8mk"));
+        assert_eq!(element.data[2], 127);
     }
 
     #[test]
