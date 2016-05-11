@@ -33,8 +33,17 @@ impl IconElement {
     }
 
     /// Creates an icon element that encodes the given image as the given icon
-    /// type.  Returns an error if the image has the wrong dimensions for that
-    /// icon type.
+    /// type.  Image color channels that aren't relevant to the specified icon
+    /// type will be ignored (e.g. if the icon type is a mask, then only the
+    /// alpha channel of the image will be used).  Returns an error if the
+    /// image dimensions don't match the icon type.
+    ///
+    /// Note that if `icon_type` has an associated mask type, this method will
+    /// _not_ encode the mask, and will in fact ignore any alpha channel in the
+    /// image; you'll need to encode a second `IconElement` with the mask type.
+    /// For a higher-level interface that will encode both elements at once,
+    /// see the [`IconFamily.add_icon_with_type`](
+    /// struct.IconFamily.html#method.add_icon_with_type) method.
     pub fn encode_image_with_type(image: &Image,
                                   icon_type: IconType)
                                   -> io::Result<IconElement> {
@@ -86,6 +95,14 @@ impl IconElement {
     /// Decodes the icon element into an image.  Returns an error if this
     /// element does not represent an icon type supported by this library, or
     /// if the data is malformed.
+    ///
+    /// Note that if the element's icon type has an associated mask type, this
+    /// method will simply produce an image with no alpha channel (since the
+    /// mask lives in a separate `IconElement`).  To decode image and mask
+    /// together into a single image, you can either use the
+    /// [`decode_image_with_mask`](#method.decode_image_with_mask) method,
+    /// or the higher-level [`IconFamily.get_icon_with_type`](
+    /// struct.IconFamily.html#method.get_icon_with_type) method.
     pub fn decode_image(&self) -> io::Result<Image> {
         let icon_type = try!(self.icon_type().ok_or_else(|| {
             Error::new(ErrorKind::InvalidInput,
@@ -114,7 +131,7 @@ impl IconElement {
             }
             Encoding::RLE24 => {
                 let mut image = Image::new(PixelFormat::RGB, width, height);
-                try!(decode_rle(&self.data, image.data_mut()));
+                try!(decode_rle(&self.data, 3, image.data_mut()));
                 Ok(image)
             }
             Encoding::Mask8 => {
@@ -131,6 +148,51 @@ impl IconElement {
                 Ok(image)
             }
         }
+    }
+
+    /// Decodes this element, together with a separate mask element, into a
+    /// single image with alpha channel.  Returns an error if this element does
+    /// not represent an icon type supported by this library, or if the given
+    /// mask element does not represent the correct mask type for this element,
+    /// or if any of the data is malformed.
+    ///
+    /// For a more convenient alternative to this method, consider using the
+    /// higher-level [`IconFamily.get_icon_with_type`](
+    /// struct.IconFamily.html#method.get_icon_with_type) method instead.
+    pub fn decode_image_with_mask(&self,
+                                  mask: &IconElement)
+                                  -> io::Result<Image> {
+        let icon_type = try!(self.icon_type().ok_or_else(|| {
+            Error::new(ErrorKind::InvalidInput,
+                       format!("unsupported OSType: {}", self.ostype))
+        }));
+        let mask_type = try!(icon_type.mask_type().ok_or_else(|| {
+            let msg = format!("icon type {:?} does not use a mask", icon_type);
+            Error::new(ErrorKind::InvalidInput, msg)
+        }));
+        assert_eq!(icon_type.encoding(), Encoding::RLE24);
+        if mask.ostype != mask_type.ostype() {
+            let msg = format!("wrong OSType for mask ('{}' instead of '{}')",
+                              mask.ostype,
+                              mask_type.ostype());
+            return Err(Error::new(ErrorKind::InvalidInput, msg));
+        }
+        let width = icon_type.pixel_width();
+        let height = icon_type.pixel_height();
+        let num_pixels = (width * height) as usize;
+        if mask.data.len() != num_pixels {
+            let msg = format!("wrong mask data payload length ({} instead \
+                               of {})",
+                              mask.data.len(),
+                              num_pixels);
+            return Err(Error::new(ErrorKind::InvalidInput, msg));
+        }
+        let mut image = Image::new(PixelFormat::RGBA, width, height);
+        try!(decode_rle(&self.data, 4, image.data_mut()));
+        for (i, &alpha) in mask.data.iter().enumerate() {
+            image.data_mut()[4 * i + 3] = alpha;
+        }
+        Ok(image)
     }
 
     /// Returns the type of icon encoded by this element, or `None` if this
@@ -224,9 +286,13 @@ fn encode_rle(input: &[u8],
     output
 }
 
-fn decode_rle(input: &[u8], output: &mut [u8]) -> io::Result<()> {
-    assert_eq!(output.len() % 3, 0);
-    let num_pixels = output.len() / 3;
+fn decode_rle(input: &[u8],
+              num_output_channels: usize,
+              output: &mut [u8])
+              -> io::Result<()> {
+    assert!(num_output_channels == 3 || num_output_channels == 4);
+    assert_eq!(output.len() % num_output_channels, 0);
+    let num_pixels = output.len() / num_output_channels;
     // Sometimes, RLE-encoded data starts with four extra zeros that must be
     // skipped.
     let skip: usize = if input.starts_with(&[0, 0, 0, 0]) {
@@ -252,7 +318,7 @@ fn decode_rle(input: &[u8], output: &mut [u8]) -> io::Result<()> {
                     run_value = *try!(iter.next().ok_or_else(rle_error));
                 }
             }
-            output[3 * pixel + channel] = if within_run {
+            output[num_output_channels * pixel + channel] = if within_run {
                 run_value
             } else {
                 *try!(iter.next().ok_or_else(rle_error))
@@ -341,5 +407,23 @@ mod tests {
         assert_eq!(image.width(), 16);
         assert_eq!(image.height(), 16);
         assert_eq!(image.data()[2], 127);
+    }
+
+    #[test]
+    fn decode_rle_with_mask() {
+        let color_data: Vec<u8> = vec![0, 12, 255, 0, 250, 0, 128, 34, 255,
+                                       0, 248, 0, 1, 56, 99, 255, 0, 249, 0];
+        let color_element = IconElement::new(OSType(*b"is32"), color_data);
+        let mask_data = vec![78u8; 256];
+        let mask_element = IconElement::new(OSType(*b"s8mk"), mask_data);
+        let image = color_element.decode_image_with_mask(&mask_element)
+                                 .expect("failed to decode image");
+        assert_eq!(image.pixel_format(), PixelFormat::RGBA);
+        assert_eq!(image.width(), 16);
+        assert_eq!(image.height(), 16);
+        assert_eq!(image.data()[0], 12);
+        assert_eq!(image.data()[1], 34);
+        assert_eq!(image.data()[2], 56);
+        assert_eq!(image.data()[3], 78);
     }
 }

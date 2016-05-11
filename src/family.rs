@@ -45,23 +45,17 @@ impl IconFamily {
                 return Err(Error::new(ErrorKind::InvalidInput, msg));
             }
         };
-        assert!(icon_type.is_primary());
-        self.add_icon_with_primary_type(image, icon_type)
+        self.add_icon_with_type(image, icon_type)
     }
 
-    /// Encodes the image into the family using the given primary icon type.
-    /// If the selected type has an associated mask type, the image mask will
-    /// also be added to the family.  Returns an error if the selected icon
-    /// type is not primary (i.e. it is a mask) or if the image has the wrong
+    /// Encodes the image into the family using the given icon type.  If the
+    /// selected type has an associated mask type, the image mask will also be
+    /// added to the family.  Returns an error if the image has the wrong
     /// dimensions for the selected type.
-    pub fn add_icon_with_primary_type(&mut self,
-                                      image: &Image,
-                                      icon_type: IconType)
-                                      -> io::Result<()> {
-        if !icon_type.is_primary() {
-            let msg = format!("{:?} is not a primary icon type", icon_type);
-            return Err(Error::new(ErrorKind::InvalidInput, msg));
-        }
+    pub fn add_icon_with_type(&mut self,
+                              image: &Image,
+                              icon_type: IconType)
+                              -> io::Result<()> {
         self.elements
             .push(try!(IconElement::encode_image_with_type(image, icon_type)));
         if let Some(mask_type) = icon_type.mask_type() {
@@ -70,6 +64,57 @@ impl IconFamily {
                                                                mask_type)));
         }
         Ok(())
+    }
+
+    /// Returns a list of all (non-mask) icon types for which the icon family
+    /// contains the necessary element(s) for a complete icon image (including
+    /// alpha channel).  These icon types can be passed to the
+    /// [`get_icon_with_type`](#method.get_icon_with_type) method to decode the
+    /// icons.
+    pub fn available_icons(&self) -> Vec<IconType> {
+        let mut result = Vec::new();
+        for element in &self.elements {
+            if let Some(icon_type) = element.icon_type() {
+                if !icon_type.is_mask() {
+                    if let Some(mask_type) = icon_type.mask_type() {
+                        if self.find_element(mask_type).is_ok() {
+                            result.push(icon_type);
+                        }
+                    } else {
+                        result.push(icon_type);
+                    }
+                }
+            }
+        }
+        result
+    }
+
+    /// Decodes an image from the family with the given icon type.  If the
+    /// selected type has an associated mask type, the two elements will
+    /// decoded together into a single image.  Returns an error if the
+    /// element(s) for the selected type are not present in the icon family, or
+    /// the if the encoded data is malformed.
+    pub fn get_icon_with_type(&self,
+                              icon_type: IconType)
+                              -> io::Result<Image> {
+        let element = try!(self.find_element(icon_type));
+        if let Some(mask_type) = icon_type.mask_type() {
+            let mask = try!(self.find_element(mask_type));
+            element.decode_image_with_mask(mask)
+        } else {
+            element.decode_image()
+        }
+    }
+
+    /// Private helper method.
+    fn find_element(&self, icon_type: IconType) -> io::Result<&IconElement> {
+        let ostype = icon_type.ostype();
+        self.elements.iter().find(|el| el.ostype == ostype).ok_or_else(|| {
+            let msg = format!("the icon family does not contain a '{}' \
+                               element",
+                              ostype);
+            Error::new(ErrorKind::NotFound, msg)
+        })
     }
 
     /// Returns the encoded length of the file, in bytes, including the

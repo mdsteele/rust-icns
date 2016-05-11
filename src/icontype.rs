@@ -220,29 +220,28 @@ impl IconType {
         }
     }
 
-    /// Returns true if this is a "primary" icon type, or false if it is a mask
-    /// for some other (primary) icon type.
+    /// Returns true if this is icon type is a mask for some other icon type.
     ///
     /// # Examples
     /// ```
     /// use icns::IconType;
-    /// assert!(IconType::RGB24_16x16.is_primary());
-    /// assert!(!IconType::Mask8_16x16.is_primary());
-    /// assert!(IconType::RGBA32_16x16.is_primary());
+    /// assert!(!IconType::RGB24_16x16.is_mask());
+    /// assert!(IconType::Mask8_16x16.is_mask());
+    /// assert!(!IconType::RGBA32_16x16.is_mask());
     /// ```
-    pub fn is_primary(self) -> bool {
+    pub fn is_mask(self) -> bool {
         match self {
             IconType::Mask8_16x16 |
             IconType::Mask8_32x32 |
             IconType::Mask8_48x48 |
-            IconType::Mask8_128x128 => false,
-            _ => true,
+            IconType::Mask8_128x128 => true,
+            _ => false,
         }
     }
 
-    /// If this is a primary icon type that has an associated mask type,
-    /// returns that mask type; if this is a mask icon type, or a primary icon
-    /// type that has no associated mask type, returns `None`.
+    /// If this icon type has an associated mask type, returns that mask type;
+    /// if this is a mask icon type, or a non-mask icon type that has no
+    /// associated mask type, returns `None`.
     ///
     /// # Examples
     /// ```
@@ -378,11 +377,11 @@ mod tests {
         for icon_type in &ALL_ICON_TYPES {
             match icon_type.encoding() {
                 Encoding::Mask8 => {
-                    assert!(!icon_type.is_primary());
+                    assert!(icon_type.is_mask());
                     assert_eq!(icon_type.mask_type(), None);
                 }
                 Encoding::RLE24 => {
-                    assert!(icon_type.is_primary());
+                    assert!(!icon_type.is_mask());
                     if let Some(mask_type) = icon_type.mask_type() {
                         assert_eq!(mask_type.encoding(), Encoding::Mask8);
                         assert_eq!(icon_type.pixel_width(),
@@ -394,7 +393,7 @@ mod tests {
                     }
                 }
                 Encoding::JP2PNG => {
-                    assert!(icon_type.is_primary());
+                    assert!(!icon_type.is_mask());
                     assert_eq!(icon_type.mask_type(), None);
                 }
             }

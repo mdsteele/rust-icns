@@ -1,3 +1,15 @@
+//! Creates an ICNS file containing a single image, read from a PNG file.
+//!
+//! To create an ICNS file from a PNG, run:
+//!
+//! ```shell
+//! cargo run --example png2icns <path/to/file.png>
+//! # ICNS will be saved to path/to/file.icns
+//! ```
+//!
+//! Note that the dimensions of the input image must be exactly those of one of
+//! the supported icon types (for example, 32x32 or 128x128).
+
 extern crate icns;
 
 use icns::{IconFamily, Image};
