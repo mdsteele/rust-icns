@@ -2,6 +2,8 @@ use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::io::{self, Error, ErrorKind, Read, Write};
 
 use super::element::IconElement;
+use super::icontype::IconType;
+use super::image::Image;
 
 /// The first four bytes of an ICNS file:
 const ICNS_MAGIC_LITERAL: &'static [u8; 4] = b"icns";
@@ -19,6 +21,55 @@ impl IconFamily {
     /// Creates a new, empty icon family.
     pub fn new() -> IconFamily {
         IconFamily { elements: Vec::new() }
+    }
+
+    /// Encodes the image into the family, choosing the most appropriate icon
+    /// type (or types, if a separate mask element is needed) automatically.
+    /// Returns an error if there is no supported icon type matching the
+    /// dimensions of the image.
+    pub fn add_icon(&mut self, image: &Image) -> io::Result<()> {
+        let icon_type = match (image.width(), image.height()) {
+            (16, 16) => IconType::RGB24_16x16,
+            (32, 32) => IconType::RGB24_32x32,
+            (48, 48) => IconType::RGB24_48x48,
+            (64, 64) => IconType::RGBA32_64x64,
+            (128, 128) => IconType::RGB24_128x128,
+            (256, 256) => IconType::RGBA32_256x256,
+            (512, 512) => IconType::RGBA32_512x512,
+            (1024, 1024) => IconType::RGBA32_512x512_2x,
+            _ => {
+                let msg = format!("no supported icon type has dimensions \
+                                   {}x{}",
+                                  image.width(),
+                                  image.height());
+                return Err(Error::new(ErrorKind::InvalidInput, msg));
+            }
+        };
+        assert!(icon_type.is_primary());
+        self.add_icon_with_primary_type(image, icon_type)
+    }
+
+    /// Encodes the image into the family using the given primary icon type.
+    /// If the selected type has an associated mask type, the image mask will
+    /// also be added to the family.  Returns an error if the selected icon
+    /// type is not primary (i.e. it is a mask) or if the image has the wrong
+    /// dimensions for the selected type.
+    pub fn add_icon_with_primary_type(&mut self,
+                                      image: &Image,
+                                      icon_type: IconType)
+                                      -> io::Result<()> {
+        if !icon_type.is_primary() {
+            let msg = format!("{:?} is not a primary icon type", icon_type);
+            return Err(Error::new(ErrorKind::InvalidInput, msg));
+        }
+        self.elements
+            .push(try!(IconElement::encode_image_with_type(image, icon_type)));
+        if let Some(mask_type) = icon_type.mask_type() {
+            self.elements
+                .push(try!(IconElement::encode_image_with_type(image,
+                                                               mask_type)));
+        }
+        Ok(())
     }
 
     /// Returns the encoded length of the file, in bytes, including the

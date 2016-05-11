@@ -175,7 +175,11 @@ fn encode_rle(input: &[u8],
               num_pixels: usize)
               -> Vec<u8> {
     assert!(num_input_channels == 3 || num_input_channels == 4);
-    let mut output = Vec::with_capacity(num_pixels);
+    let mut output = Vec::new();
+    if num_pixels == 128 * 128 {
+        // The 128x128 RLE icon (it32) starts with four extra zeros.
+        output.extend_from_slice(&[0, 0, 0, 0]);
+    }
     for channel in 0..3 {
         let mut pixel: usize = 0;
         let mut literal_start: usize = 0;
@@ -224,7 +228,7 @@ fn decode_rle(input: &[u8], output: &mut [u8]) -> io::Result<()> {
     assert_eq!(output.len() % 3, 0);
     let num_pixels = output.len() / 3;
     // Sometimes, RLE-encoded data starts with four extra zeros that must be
-    // skipped.  The internet doesn't seem to know why.
+    // skipped.
     let skip: usize = if input.starts_with(&[0, 0, 0, 0]) {
         4
     } else {

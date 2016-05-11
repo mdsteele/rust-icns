@@ -9,7 +9,7 @@ use std::str::FromStr;
 
 fn main() {
     if env::args().count() != 3 {
-        println!("Usage: readicns <ostype> <path>");
+        println!("Usage: icns2png <ostype> <path>");
         return;
     }
     let ostype = OSType::from_str(&env::args().nth(1).unwrap()).unwrap();

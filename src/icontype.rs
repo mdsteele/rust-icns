@@ -220,6 +220,48 @@ impl IconType {
         }
     }
 
+    /// Returns true if this is a "primary" icon type, or false if it is a mask
+    /// for some other (primary) icon type.
+    ///
+    /// # Examples
+    /// ```
+    /// use icns::IconType;
+    /// assert!(IconType::RGB24_16x16.is_primary());
+    /// assert!(!IconType::Mask8_16x16.is_primary());
+    /// assert!(IconType::RGBA32_16x16.is_primary());
+    /// ```
+    pub fn is_primary(self) -> bool {
+        match self {
+            IconType::Mask8_16x16 |
+            IconType::Mask8_32x32 |
+            IconType::Mask8_48x48 |
+            IconType::Mask8_128x128 => false,
+            _ => true,
+        }
+    }
+
+    /// If this is a primary icon type that has an associated mask type,
+    /// returns that mask type; if this is a mask icon type, or a primary icon
+    /// type that has no associated mask type, returns `None`.
+    ///
+    /// # Examples
+    /// ```
+    /// use icns::IconType;
+    /// assert_eq!(IconType::RGB24_16x16.mask_type(),
+    ///            Some(IconType::Mask8_16x16));
+    /// assert_eq!(IconType::Mask8_16x16.mask_type(), None);
+    /// assert_eq!(IconType::RGBA32_16x16.mask_type(), None);
+    /// ```
+    pub fn mask_type(self) -> Option<IconType> {
+        match self {
+            IconType::RGB24_16x16 => Some(IconType::Mask8_16x16),
+            IconType::RGB24_32x32 => Some(IconType::Mask8_32x32),
+            IconType::RGB24_48x48 => Some(IconType::Mask8_48x48),
+            IconType::RGB24_128x128 => Some(IconType::Mask8_128x128),
+            _ => None,
+        }
+    }
+
     /// Returns the encoding used within an ICNS file for this icon type.
     pub fn encoding(self) -> Encoding {
         match self {
@@ -302,31 +344,60 @@ mod tests {
     use super::*;
     use std::str::FromStr;
 
+    const ALL_ICON_TYPES: [IconType; 19] = [IconType::RGB24_16x16,
+                                            IconType::Mask8_16x16,
+                                            IconType::RGB24_32x32,
+                                            IconType::Mask8_32x32,
+                                            IconType::RGB24_48x48,
+                                            IconType::Mask8_48x48,
+                                            IconType::RGB24_128x128,
+                                            IconType::Mask8_128x128,
+                                            IconType::RGBA32_16x16,
+                                            IconType::RGBA32_16x16_2x,
+                                            IconType::RGBA32_32x32,
+                                            IconType::RGBA32_32x32_2x,
+                                            IconType::RGBA32_64x64,
+                                            IconType::RGBA32_128x128,
+                                            IconType::RGBA32_128x128_2x,
+                                            IconType::RGBA32_256x256,
+                                            IconType::RGBA32_256x256_2x,
+                                            IconType::RGBA32_512x512,
+                                            IconType::RGBA32_512x512_2x];
+
     #[test]
     fn icon_type_ostype_round_trip() {
-        let icon_types = [IconType::RGB24_16x16,
-                          IconType::Mask8_16x16,
-                          IconType::RGB24_32x32,
-                          IconType::Mask8_32x32,
-                          IconType::RGB24_48x48,
-                          IconType::Mask8_48x48,
-                          IconType::RGB24_128x128,
-                          IconType::Mask8_128x128,
-                          IconType::RGBA32_16x16,
-                          IconType::RGBA32_16x16_2x,
-                          IconType::RGBA32_32x32,
-                          IconType::RGBA32_32x32_2x,
-                          IconType::RGBA32_64x64,
-                          IconType::RGBA32_128x128,
-                          IconType::RGBA32_128x128_2x,
-                          IconType::RGBA32_256x256,
-                          IconType::RGBA32_256x256_2x,
-                          IconType::RGBA32_512x512,
-                          IconType::RGBA32_512x512_2x];
-        for icon_type in &icon_types {
+        for icon_type in &ALL_ICON_TYPES {
             let ostype = icon_type.ostype();
             let from = IconType::from_ostype(ostype);
             assert_eq!(Some(*icon_type), from);
+        }
+    }
+
+    #[test]
+    fn icon_type_mask_type() {
+        for icon_type in &ALL_ICON_TYPES {
+            match icon_type.encoding() {
+                Encoding::Mask8 => {
+                    assert!(!icon_type.is_primary());
+                    assert_eq!(icon_type.mask_type(), None);
+                }
+                Encoding::RLE24 => {
+                    assert!(icon_type.is_primary());
+                    if let Some(mask_type) = icon_type.mask_type() {
+                        assert_eq!(mask_type.encoding(), Encoding::Mask8);
+                        assert_eq!(icon_type.pixel_width(),
+                                   mask_type.pixel_width());
+                        assert_eq!(icon_type.pixel_height(),
+                                   mask_type.pixel_height());
+                    } else {
+                        panic!("{:?} is missing a mask type", icon_type);
+                    }
+                }
+                Encoding::JP2PNG => {
+                    assert!(icon_type.is_primary());
+                    assert_eq!(icon_type.mask_type(), None);
+                }
+            }
         }
     }
 
