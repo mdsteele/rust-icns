@@ -266,14 +266,23 @@ impl std::str::FromStr for OSType {
     type Err = String;
 
     fn from_str(input: &str) -> Result<OSType, String> {
-        let bytes = input.as_bytes();
-        if bytes.len() != 4 {
-            Err(format!("OSType string must be 4 bytes (was {})", bytes.len()))
-        } else {
-            let mut raw = [0u8; 4];
-            raw.clone_from_slice(bytes);
-            Ok(OSType(raw))
+        let chars: Vec<char> = input.chars().collect();
+        if chars.len() != 4 {
+            return Err(format!("OSType string must be 4 chars (was {})",
+                               chars.len()));
         }
+        let mut bytes = [0u8; 4];
+        for (i, &ch) in chars.iter().enumerate() {
+            let value = ch as u32;
+            if value > std::u8::MAX as u32 {
+                return Err(format!("OSType chars must have value of at \
+                                    most 0x{:X} (found 0x{:X})",
+                                   std::u8::MAX,
+                                   value));
+            }
+            bytes[i] = value as u8;
+        }
+        Ok(OSType(bytes))
     }
 }
 
@@ -328,10 +337,22 @@ mod tests {
     }
 
     #[test]
+    fn ostype_to_and_from_str_non_ascii() {
+        let ostype = OSType(*b"sp\xf6b");
+        let string = ostype.to_string();
+        assert_eq!(string, "sp\u{f6}b".to_string());
+        assert_eq!(OSType::from_str(&string), Ok(ostype));
+    }
+
+    #[test]
     fn ostype_from_str_failure() {
         assert_eq!(OSType::from_str("abc"),
-                   Err("OSType string must be 4 bytes (was 3)".to_string()));
+                   Err("OSType string must be 4 chars (was 3)".to_string()));
         assert_eq!(OSType::from_str("abcde"),
-                   Err("OSType string must be 4 bytes (was 5)".to_string()));
+                   Err("OSType string must be 4 chars (was 5)".to_string()));
+        assert_eq!(OSType::from_str("ab\u{2603}d"),
+                   Err("OSType chars must have value of at most 0xFF \
+                        (found 0x2603)"
+                           .to_string()));
     }
 }
