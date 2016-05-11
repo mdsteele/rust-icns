@@ -231,6 +231,14 @@ fn encode_rle(input: &[u8],
 fn decode_rle(input: &[u8], output: &mut [u8]) -> io::Result<()> {
     assert_eq!(output.len() % 3, 0);
     let num_pixels = output.len() / 3;
+    // Sometimes, RLE-encoded data starts with four extra zeros that must be
+    // skipped.  The internet doesn't seem to know why.
+    let skip: usize = if input.starts_with(&[0, 0, 0, 0]) {
+        4
+    } else {
+        0
+    };
+    let input = &input[skip..input.len()];
     let mut iter = input.iter();
     let mut remaining: usize = 0;
     let mut within_run = false;
@@ -300,6 +308,17 @@ mod tests {
         assert_eq!(image.pixel_format(), PixelFormat::RGB);
         assert_eq!(image.width(), 16);
         assert_eq!(image.height(), 16);
+        assert_eq!(image.data()[0], 12);
+        assert_eq!(image.data()[1], 34);
+        assert_eq!(image.data()[2], 56);
+    }
+
+    #[test]
+    fn decode_rle_skip_extra_zeros() {
+        let data: Vec<u8> = vec![0, 0, 0, 0, 0, 12, 255, 0, 250, 0, 128, 34,
+                                 255, 0, 248, 0, 1, 56, 99, 255, 0, 249, 0];
+        let element = IconElement::new(OSType(*b"is32"), data);
+        let image = element.decode_image().expect("failed to decode image");
         assert_eq!(image.data()[0], 12);
         assert_eq!(image.data()[1], 34);
         assert_eq!(image.data()[2], 56);
