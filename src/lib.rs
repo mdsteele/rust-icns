@@ -1,4 +1,4 @@
-//! Library for encoding/decoding Apple Icon Image (.icns) files.
+//! A library for encoding/decoding Apple Icon Image (.icns) files.
 //!
 //! # ICNS concepts
 //!
