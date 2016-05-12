@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Encoding","Methods of encoding an image within an icon element."],["IconType","Types of icon elements that can be decoded as images or masks."]],"struct":[["OSType","A Macintosh OSType (also known as a ResType), used in ICNS files to identify the type of each icon element."]]});

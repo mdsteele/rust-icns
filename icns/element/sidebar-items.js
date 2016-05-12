@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["IconElement","One data block in an ICNS file.  Depending on the resource type, this may represent an icon, or part of an icon (such as an alpha mask, or color data without the mask)."]]});

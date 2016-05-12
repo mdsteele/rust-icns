@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `icns` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, icns">
+
+    <title>icns - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'icns', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>icns</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-0' class='srclink' href='../src/icns/src/lib.rs.html#1-139' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>A library for encoding/decoding Apple Icon Image (.icns) files.</p>
+
+<h1 id='icns-concepts' class='section-header'><a href='#icns-concepts'>ICNS concepts</a></h1>
+<p>To understand this library, it helps to be familiar with the structure of
+an ICNS file; this section will give a high-level overview, or see
+<a href="https://en.wikipedia.org/wiki/Apple_Icon_Image_format">Wikipedia</a> for more
+details about the file format.  If you prefer to learn by example, you can
+just skip down to the <a href="#example-usage">Example usage</a> section below.</p>
+
+<p>An ICNS file encodes a collection of images (typically different versions
+of the same icon at different resolutions) called an <em>icon family</em>.  The
+file consists of a short header followed by a sequence of data blocks
+called <em>icon elements</em>.  Each icon element consists of a header with an
+<em>OSType</em> -- which is essentially a four-byte identifier indicating the type
+of data in the element -- and a blob of binary data.</p>
+
+<p>Each image in the ICNS file is encoded either as a single icon element, or
+as two elements -- one for the color data and one for the alpha mask.  For
+example, 48x48 pixel icons are stored as two elements: an <code>ih32</code> element
+containing compressed 24-bit RGB data, and an <code>h8mk</code> element containing the
+8-bit alpha mask.  By contrast, 64x64 pixel icons are stored as a single
+<code>icp6</code> element, which contains either PNG or JPEG 2000 data for the whole
+32-bit image.</p>
+
+<p>Some icon sizes have multiple possible encodings.  For example, a 128x128
+icon can be stored either as an <code>it32</code> and an <code>t8mk</code> element together
+(containing compressed RGB and alpha, respectively), or as a single <code>ic07</code>
+element (containing PNG or JPEG 2000 data).  And for some icon sizes, there
+are separate OSTypes for single and double-pixel-density versions of the
+icon (for &quot;retina&quot; displays).  For example, an <code>ic08</code> element encodes a
+single-density 256x256 image, while an <code>ic14</code> element encodes a
+double-density 256x256 image -- that is, the image data is actually 512x512
+pixels, and is considered different from the single-density 512x512 pixel
+image encoded by an <code>ic09</code> element.</p>
+
+<p>Finally, there are some additional, optional element types that don&#39;t
+encode images at all.  For example, the <code>TOC</code> element summarizes the
+contents of the ICNS file, and the <code>icnV</code> element stores version
+information.</p>
+
+<h1 id='api-overview' class='section-header'><a href='#api-overview'>API overview</a></h1>
+<p>The API for this library is modelled loosely after that of
+<a href="http://icns.sourceforge.net/apidocs.html">libicns</a>.</p>
+
+<p>The icon family stored in an ICNS file is represeted by the
+<a href="struct.IconFamily.html"><code>IconFamily</code></a> struct, which provides methods for
+<a href="struct.IconFamily.html#method.read">reading</a> and
+<a href="struct.IconFamily.html#method.write">writing</a> ICNS files, as well as for
+high-level operations on the icon set, such as
+<a href="struct.IconFamily.html#method.add_icon_with_type">adding</a>,
+<a href="struct.IconFamily.html#method.get_icon_with_type">extracting</a>, and
+<a href="struct.IconFamily.html#method.available_icons">listing</a> the encoded
+images.</p>
+
+<p>An <code>IconFamily</code> contains a vector of
+<a href="struct.IconElement.html"><code>IconElement</code></a> structs, which represent
+individual data blocks in the ICNS file.  Each <code>IconElement</code> has an
+<a href="struct.OSType.html"><code>OSType</code></a> indicating the type of data in the element,
+as well as a <code>Vec&lt;u8&gt;</code> containing the data itself.  Usually, you won&#39;t
+need to work with <code>IconElement</code>s directly, and can instead use the
+higher-level operations provided by <code>IconFamily</code>.</p>
+
+<p>Since raw OSTypes like <code>t8mk</code> and <code>icp4</code> can be hard to remember, the
+<a href="enum.IconType.html"><code>IconType</code></a> type enumerates all the icon element types
+that are supported by this library, with more mnemonic names (for example,
+<code>IconType::RGB24_48x48</code> indicates 24-bit RGB data for a 48x48 pixel icon,
+and is a bit more understandable than the corresponding OSType, <code>ih32</code>).
+ The <code>IconType</code> enum also provides methods for getting the properties of
+each icon type, such as the size of the encoded image, or the associated
+mask type (for icons that are stored as two elements instead of one).</p>
+
+<p>Regardless of whether you use the higher-level <code>IconFamily</code> methods or the
+lower-level <code>IconElement</code> methods, icons from the ICNS file can be decoded
+into <a href="struct.Image.html"><code>Image</code></a> structs, which can be
+<a href="struct.Image.html#method.convert_to">converted</a> to and from any of several
+<a href="enum.PixelFormat.html"><code>PixelFormats</code></a> to allow the raw pixel data to be
+easily transferred to another image library for further processing.  Since
+this library already depends on the PNG codec anyway (since some ICNS icons
+are PNG-encoded), as a convenience, the <a href="struct.Image.html"><code>Image</code></a> struct
+also provides methods for <a href="struct.Image.html#method.read_png">reading</a> and
+<a href="struct.Image.html#method.write_png">writing</a> PNG files.</p>
+
+<h1 id='limitations' class='section-header'><a href='#limitations'>Limitations</a></h1>
+<p>The ICNS format allows some icon types to be encoded either as PNG data or
+as JPEG 2000 data; however, when encoding icons, this library always uses
+PNG format, and when decoding icons, it cannot decode JPEG 2000 icons at
+all (it will detect the JPEG 2000 header and return an error).  The reason
+for this is the apparent lack of JPEG 2000 libraries for Rust; if this ever
+changes, please feel free to file a bug or a send a pull request.</p>
+
+<p>Additionally, this library does not yet support many of the older icon
+types used by earlier versions of Mac OS (such as <code>ICN#</code>, a 32x32 black and
+white icon).  Again, pull requests (with suitable tests) are welcome.</p>
+
+<h1 id='example-usage' class='section-header'><a href='#example-usage'>Example usage</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>icns</span>::{<span class='ident'>IconFamily</span>, <span class='ident'>IconType</span>, <span class='ident'>Image</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='ident'>BufReader</span>, <span class='ident'>BufWriter</span>};
+
+<span class='comment'>// Load an icon family from an ICNS file.</span>
+<span class='kw'>let</span> <span class='ident'>file</span> <span class='op'>=</span> <span class='ident'>BufReader</span>::<span class='ident'>new</span>(<span class='ident'>File</span>::<span class='ident'>open</span>(<span class='string'>&quot;16.icns&quot;</span>).<span class='ident'>unwrap</span>());
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>icon_family</span> <span class='op'>=</span> <span class='ident'>IconFamily</span>::<span class='ident'>read</span>(<span class='ident'>file</span>).<span class='ident'>unwrap</span>();
+
+<span class='comment'>// Extract an icon from the family and save it as a PNG.</span>
+<span class='kw'>let</span> <span class='ident'>image</span> <span class='op'>=</span> <span class='ident'>icon_family</span>.<span class='ident'>get_icon_with_type</span>(<span class='ident'>IconType</span>::<span class='ident'>RGB24_16x16</span>).<span class='ident'>unwrap</span>();
+<span class='kw'>let</span> <span class='ident'>file</span> <span class='op'>=</span> <span class='ident'>BufWriter</span>::<span class='ident'>new</span>(<span class='ident'>File</span>::<span class='ident'>create</span>(<span class='string'>&quot;16.png&quot;</span>).<span class='ident'>unwrap</span>());
+<span class='ident'>image</span>.<span class='ident'>write_png</span>(<span class='ident'>file</span>).<span class='ident'>unwrap</span>();
+
+<span class='comment'>// Read in another icon from a PNG file, and add it to the icon family.</span>
+<span class='kw'>let</span> <span class='ident'>file</span> <span class='op'>=</span> <span class='ident'>BufReader</span>::<span class='ident'>new</span>(<span class='ident'>File</span>::<span class='ident'>open</span>(<span class='string'>&quot;32.png&quot;</span>).<span class='ident'>unwrap</span>());
+<span class='kw'>let</span> <span class='ident'>image</span> <span class='op'>=</span> <span class='ident'>Image</span>::<span class='ident'>read_png</span>(<span class='ident'>file</span>).<span class='ident'>unwrap</span>();
+<span class='ident'>icon_family</span>.<span class='ident'>add_icon</span>(<span class='kw-2'>&amp;</span><span class='ident'>image</span>).<span class='ident'>unwrap</span>();
+
+<span class='comment'>// Save the updated icon family to a new ICNS file.</span>
+<span class='kw'>let</span> <span class='ident'>file</span> <span class='op'>=</span> <span class='ident'>BufWriter</span>::<span class='ident'>new</span>(<span class='ident'>File</span>::<span class='ident'>create</span>(<span class='string'>&quot;16-and-32.icns&quot;</span>).<span class='ident'>unwrap</span>());
+<span class='ident'>icon_family</span>.<span class='ident'>write</span>(<span class='ident'>file</span>).<span class='ident'>unwrap</span>();</pre>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.IconElement.html'
+                               title='icns::IconElement'>IconElement</a></td>
+                        <td class='docblock short'>
+                             <p>One data block in an ICNS file.  Depending on the resource type, this may
+represent an icon, or part of an icon (such as an alpha mask, or color
+data without the mask).</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.IconFamily.html'
+                               title='icns::IconFamily'>IconFamily</a></td>
+                        <td class='docblock short'>
+                             <p>A set of icons stored in a single ICNS file.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Image.html'
+                               title='icns::Image'>Image</a></td>
+                        <td class='docblock short'>
+                             <p>A decoded icon image.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.OSType.html'
+                               title='icns::OSType'>OSType</a></td>
+                        <td class='docblock short'>
+                             <p>A Macintosh OSType (also known as a ResType), used in ICNS files to
+identify the type of each icon element.</p>
+                        </td>
+                    </tr>
+                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.Encoding.html'
+                               title='icns::Encoding'>Encoding</a></td>
+                        <td class='docblock short'>
+                             <p>Methods of encoding an image within an icon element.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.IconType.html'
+                               title='icns::IconType'>IconType</a></td>
+                        <td class='docblock short'>
+                             <p>Types of icon elements that can be decoded as images or masks.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.PixelFormat.html'
+                               title='icns::PixelFormat'>PixelFormat</a></td>
+                        <td class='docblock short'>
+                             <p>Formats for storing pixel data in an image.</p>
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "icns";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

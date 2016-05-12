@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `IconElement` struct in crate `icns`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, IconElement">
+
+    <title>icns::IconElement - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>icns</a></p><script>window.sidebarCurrent = {name: 'IconElement', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>icns</a>::<wbr><a class='struct' href=''>IconElement</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-15' class='srclink' href='../src/icns/src/element.rs.html#19-24' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct IconElement {
+    pub ostype: <a class='struct' href='../icns/struct.OSType.html' title='icns::OSType'>OSType</a>,
+    pub data: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;,
+}</pre><div class='docblock'><p>One data block in an ICNS file.  Depending on the resource type, this may
+represent an icon, or part of an icon (such as an alpha mask, or color
+data without the mask).</p>
+</div><h2 class='fields'>Fields</h2>
+<table><tr class='stab '>
+                                  <td id='structfield.ostype'><code>ostype</code></td><td><div class='docblock'><p>The OSType for this element (e.g. <code>it32</code> or <code>t8mk</code>).</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.data'><code>data</code></td><td><div class='docblock'><p>The raw data payload for this element.</p>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../icns/struct.IconElement.html' title='icns::IconElement'>IconElement</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(ostype: <a class='struct' href='../icns/struct.OSType.html' title='icns::OSType'>OSType</a>, data: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;) -&gt; <a class='struct' href='../icns/struct.IconElement.html' title='icns::IconElement'>IconElement</a></code></h4>
+<div class='docblock'><p>Creates an icon element with the given OSType and data payload.</p>
+</div><h4 id='method.encode_image_with_type' class='method'><code>fn <a href='#method.encode_image_with_type' class='fnname'>encode_image_with_type</a>(image: &amp;<a class='struct' href='../icns/struct.Image.html' title='icns::Image'>Image</a>, icon_type: <a class='enum' href='../icns/enum.IconType.html' title='icns::IconType'>IconType</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../icns/struct.IconElement.html' title='icns::IconElement'>IconElement</a>&gt;</code></h4>
+<div class='docblock'><p>Creates an icon element that encodes the given image as the given icon
+type.  Image color channels that aren&#39;t relevant to the specified icon
+type will be ignored (e.g. if the icon type is a mask, then only the
+alpha channel of the image will be used).  Returns an error if the
+image dimensions don&#39;t match the icon type.</p>
+
+<p>Note that if <code>icon_type</code> has an associated mask type, this method will
+<em>not</em> encode the mask, and will in fact ignore any alpha channel in the
+image; you&#39;ll need to encode a second <code>IconElement</code> with the mask type.
+For a higher-level interface that will encode both elements at once,
+see the <a href="struct.IconFamily.html#method.add_icon_with_type"><code>IconFamily.add_icon_with_type</code></a> method.</p>
+</div><h4 id='method.decode_image' class='method'><code>fn <a href='#method.decode_image' class='fnname'>decode_image</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../icns/struct.Image.html' title='icns::Image'>Image</a>&gt;</code></h4>
+<div class='docblock'><p>Decodes the icon element into an image.  Returns an error if this
+element does not represent an icon type supported by this library, or
+if the data is malformed.</p>
+
+<p>Note that if the element&#39;s icon type has an associated mask type, this
+method will simply produce an image with no alpha channel (since the
+mask lives in a separate <code>IconElement</code>).  To decode image and mask
+together into a single image, you can either use the
+<a href="#method.decode_image_with_mask"><code>decode_image_with_mask</code></a> method,
+or the higher-level <a href="struct.IconFamily.html#method.get_icon_with_type"><code>IconFamily.get_icon_with_type</code></a> method.</p>
+</div><h4 id='method.decode_image_with_mask' class='method'><code>fn <a href='#method.decode_image_with_mask' class='fnname'>decode_image_with_mask</a>(&amp;self, mask: &amp;<a class='struct' href='../icns/struct.IconElement.html' title='icns::IconElement'>IconElement</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../icns/struct.Image.html' title='icns::Image'>Image</a>&gt;</code></h4>
+<div class='docblock'><p>Decodes this element, together with a separate mask element, into a
+single image with alpha channel.  Returns an error if this element does
+not represent an icon type supported by this library, or if the given
+mask element does not represent the correct mask type for this element,
+or if any of the data is malformed.</p>
+
+<p>For a more convenient alternative to this method, consider using the
+higher-level <a href="struct.IconFamily.html#method.get_icon_with_type"><code>IconFamily.get_icon_with_type</code></a> method instead.</p>
+</div><h4 id='method.icon_type' class='method'><code>fn <a href='#method.icon_type' class='fnname'>icon_type</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='../icns/enum.IconType.html' title='icns::IconType'>IconType</a>&gt;</code></h4>
+<div class='docblock'><p>Returns the type of icon encoded by this element, or <code>None</code> if this
+element does not encode a supported icon type.</p>
+</div><h4 id='method.read' class='method'><code>fn <a href='#method.read' class='fnname'>read</a>&lt;R: <a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Read.html' title='std::io::Read'>Read</a>&gt;(reader: R) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../icns/struct.IconElement.html' title='icns::IconElement'>IconElement</a>&gt;</code></h4>
+<div class='docblock'><p>Reads an icon element from within an ICNS file.</p>
+</div><h4 id='method.write' class='method'><code>fn <a href='#method.write' class='fnname'>write</a>&lt;W: <a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Write.html' title='std::io::Write'>Write</a>&gt;(&amp;self, writer: W) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Writes the icon element to within an ICNS file.</p>
+</div><h4 id='method.total_length' class='method'><code>fn <a href='#method.total_length' class='fnname'>total_length</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a></code></h4>
+<div class='docblock'><p>Returns the encoded length of the element, in bytes, including the
+length of the header.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "icns";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

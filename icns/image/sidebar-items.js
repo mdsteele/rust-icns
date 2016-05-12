@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["PixelFormat","Formats for storing pixel data in an image."]],"struct":[["Image","A decoded icon image."]]});

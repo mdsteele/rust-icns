@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `IconFamily` struct in crate `icns`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, IconFamily">
+
+    <title>icns::IconFamily - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>icns</a></p><script>window.sidebarCurrent = {name: 'IconFamily', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>icns</a>::<wbr><a class='struct' href=''>IconFamily</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-200' class='srclink' href='../src/icns/src/family.rs.html#15-18' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct IconFamily {
+    pub elements: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../icns/struct.IconElement.html' title='icns::IconElement'>IconElement</a>&gt;,
+}</pre><div class='docblock'><p>A set of icons stored in a single ICNS file.</p>
+</div><h2 class='fields'>Fields</h2>
+<table><tr class='stab '>
+                                  <td id='structfield.elements'><code>elements</code></td><td><div class='docblock'><p>The icon elements stored in the ICNS file.</p>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../icns/struct.IconFamily.html' title='icns::IconFamily'>IconFamily</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../icns/struct.IconFamily.html' title='icns::IconFamily'>IconFamily</a></code></h4>
+<div class='docblock'><p>Creates a new, empty icon family.</p>
+</div><h4 id='method.add_icon' class='method'><code>fn <a href='#method.add_icon' class='fnname'>add_icon</a>(&amp;mut self, image: &amp;<a class='struct' href='../icns/struct.Image.html' title='icns::Image'>Image</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Encodes the image into the family, automatically choosing an
+appropriate icon type based on the dimensions of the image.  Returns
+an error if there is no supported icon type matching the image
+dimensions.</p>
+</div><h4 id='method.add_icon_with_type' class='method'><code>fn <a href='#method.add_icon_with_type' class='fnname'>add_icon_with_type</a>(&amp;mut self, image: &amp;<a class='struct' href='../icns/struct.Image.html' title='icns::Image'>Image</a>, icon_type: <a class='enum' href='../icns/enum.IconType.html' title='icns::IconType'>IconType</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Encodes the image into the family using the given icon type.  If the
+selected type has an associated mask type, the image mask will also be
+added to the family.  Returns an error if the image has the wrong
+dimensions for the selected type.</p>
+</div><h4 id='method.available_icons' class='method'><code>fn <a href='#method.available_icons' class='fnname'>available_icons</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='enum' href='../icns/enum.IconType.html' title='icns::IconType'>IconType</a>&gt;</code></h4>
+<div class='docblock'><p>Returns a list of all (non-mask) icon types for which the icon family
+contains the necessary element(s) for a complete icon image (including
+alpha channel).  These icon types can be passed to the
+<a href="#method.get_icon_with_type"><code>get_icon_with_type</code></a> method to decode the
+icons.</p>
+</div><h4 id='method.get_icon_with_type' class='method'><code>fn <a href='#method.get_icon_with_type' class='fnname'>get_icon_with_type</a>(&amp;self, icon_type: <a class='enum' href='../icns/enum.IconType.html' title='icns::IconType'>IconType</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../icns/struct.Image.html' title='icns::Image'>Image</a>&gt;</code></h4>
+<div class='docblock'><p>Decodes an image from the family with the given icon type.  If the
+selected type has an associated mask type, the two elements will
+decoded together into a single image.  Returns an error if the
+element(s) for the selected type are not present in the icon family, or
+the if the encoded data is malformed.</p>
+</div><h4 id='method.read' class='method'><code>fn <a href='#method.read' class='fnname'>read</a>&lt;R: <a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Read.html' title='std::io::Read'>Read</a>&gt;(reader: R) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../icns/struct.IconFamily.html' title='icns::IconFamily'>IconFamily</a>&gt;</code></h4>
+<div class='docblock'><p>Reads an icon family from an ICNS file.</p>
+</div><h4 id='method.write' class='method'><code>fn <a href='#method.write' class='fnname'>write</a>&lt;W: <a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Write.html' title='std::io::Write'>Write</a>&gt;(&amp;self, writer: W) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Writes the icon family to an ICNS file.</p>
+</div><h4 id='method.total_length' class='method'><code>fn <a href='#method.total_length' class='fnname'>total_length</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a></code></h4>
+<div class='docblock'><p>Returns the encoded length of the file, in bytes, including the
+length of the header.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "icns";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

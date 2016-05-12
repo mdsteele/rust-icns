@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["IconFamily","A set of icons stored in a single ICNS file."]]});

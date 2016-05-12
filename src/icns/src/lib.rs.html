@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="Source to the Rust file `src/lib.rs`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang">
+
+    <title>lib.rs.html -- source</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content source"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+</pre><pre class='rust '>
+<span class='doccomment'>//! A library for encoding/decoding Apple Icon Image (.icns) files.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! # ICNS concepts</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! To understand this library, it helps to be familiar with the structure of</span>
+<span class='doccomment'>//! an ICNS file; this section will give a high-level overview, or see</span>
+<span class='doccomment'>//! [Wikipedia](https://en.wikipedia.org/wiki/Apple_Icon_Image_format) for more</span>
+<span class='doccomment'>//! details about the file format.  If you prefer to learn by example, you can</span>
+<span class='doccomment'>//! just skip down to the [Example usage](#example-usage) section below.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! An ICNS file encodes a collection of images (typically different versions</span>
+<span class='doccomment'>//! of the same icon at different resolutions) called an _icon family_.  The</span>
+<span class='doccomment'>//! file consists of a short header followed by a sequence of data blocks</span>
+<span class='doccomment'>//! called _icon elements_.  Each icon element consists of a header with an</span>
+<span class='doccomment'>//! _OSType_ -- which is essentially a four-byte identifier indicating the type</span>
+<span class='doccomment'>//! of data in the element -- and a blob of binary data.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! Each image in the ICNS file is encoded either as a single icon element, or</span>
+<span class='doccomment'>//! as two elements -- one for the color data and one for the alpha mask.  For</span>
+<span class='doccomment'>//! example, 48x48 pixel icons are stored as two elements: an `ih32` element</span>
+<span class='doccomment'>//! containing compressed 24-bit RGB data, and an `h8mk` element containing the</span>
+<span class='doccomment'>//! 8-bit alpha mask.  By contrast, 64x64 pixel icons are stored as a single</span>
+<span class='doccomment'>//! `icp6` element, which contains either PNG or JPEG 2000 data for the whole</span>
+<span class='doccomment'>//! 32-bit image.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! Some icon sizes have multiple possible encodings.  For example, a 128x128</span>
+<span class='doccomment'>//! icon can be stored either as an `it32` and an `t8mk` element together</span>
+<span class='doccomment'>//! (containing compressed RGB and alpha, respectively), or as a single `ic07`</span>
+<span class='doccomment'>//! element (containing PNG or JPEG 2000 data).  And for some icon sizes, there</span>
+<span class='doccomment'>//! are separate OSTypes for single and double-pixel-density versions of the</span>
+<span class='doccomment'>//! icon (for &quot;retina&quot; displays).  For example, an `ic08` element encodes a</span>
+<span class='doccomment'>//! single-density 256x256 image, while an `ic14` element encodes a</span>
+<span class='doccomment'>//! double-density 256x256 image -- that is, the image data is actually 512x512</span>
+<span class='doccomment'>//! pixels, and is considered different from the single-density 512x512 pixel</span>
+<span class='doccomment'>//! image encoded by an `ic09` element.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! Finally, there are some additional, optional element types that don&#39;t</span>
+<span class='doccomment'>//! encode images at all.  For example, the `TOC` element summarizes the</span>
+<span class='doccomment'>//! contents of the ICNS file, and the `icnV` element stores version</span>
+<span class='doccomment'>//! information.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! # API overview</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! The API for this library is modelled loosely after that of</span>
+<span class='doccomment'>//! [libicns](http://icns.sourceforge.net/apidocs.html).</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! The icon family stored in an ICNS file is represeted by the</span>
+<span class='doccomment'>//! [`IconFamily`](struct.IconFamily.html) struct, which provides methods for</span>
+<span class='doccomment'>//! [reading](struct.IconFamily.html#method.read) and</span>
+<span class='doccomment'>//! [writing](struct.IconFamily.html#method.write) ICNS files, as well as for</span>
+<span class='doccomment'>//! high-level operations on the icon set, such as</span>
+<span class='doccomment'>//! [adding](struct.IconFamily.html#method.add_icon_with_type),</span>
+<span class='doccomment'>//! [extracting](struct.IconFamily.html#method.get_icon_with_type), and</span>
+<span class='doccomment'>//! [listing](struct.IconFamily.html#method.available_icons) the encoded</span>
+<span class='doccomment'>//! images.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! An `IconFamily` contains a vector of</span>
+<span class='doccomment'>//! [`IconElement`](struct.IconElement.html) structs, which represent</span>
+<span class='doccomment'>//! individual data blocks in the ICNS file.  Each `IconElement` has an</span>
+<span class='doccomment'>//! [`OSType`](struct.OSType.html) indicating the type of data in the element,</span>
+<span class='doccomment'>//! as well as a `Vec&lt;u8&gt;` containing the data itself.  Usually, you won&#39;t</span>
+<span class='doccomment'>//! need to work with `IconElement`s directly, and can instead use the</span>
+<span class='doccomment'>//! higher-level operations provided by `IconFamily`.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! Since raw OSTypes like `t8mk` and `icp4` can be hard to remember, the</span>
+<span class='doccomment'>//! [`IconType`](enum.IconType.html) type enumerates all the icon element types</span>
+<span class='doccomment'>//! that are supported by this library, with more mnemonic names (for example,</span>
+<span class='doccomment'>//! `IconType::RGB24_48x48` indicates 24-bit RGB data for a 48x48 pixel icon,</span>
+<span class='doccomment'>//! and is a bit more understandable than the corresponding OSType, `ih32`).</span>
+<span class='doccomment'>//!  The `IconType` enum also provides methods for getting the properties of</span>
+<span class='doccomment'>//! each icon type, such as the size of the encoded image, or the associated</span>
+<span class='doccomment'>//! mask type (for icons that are stored as two elements instead of one).</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! Regardless of whether you use the higher-level `IconFamily` methods or the</span>
+<span class='doccomment'>//! lower-level `IconElement` methods, icons from the ICNS file can be decoded</span>
+<span class='doccomment'>//! into [`Image`](struct.Image.html) structs, which can be</span>
+<span class='doccomment'>//! [converted](struct.Image.html#method.convert_to) to and from any of several</span>
+<span class='doccomment'>//! [`PixelFormats`](enum.PixelFormat.html) to allow the raw pixel data to be</span>
+<span class='doccomment'>//! easily transferred to another image library for further processing.  Since</span>
+<span class='doccomment'>//! this library already depends on the PNG codec anyway (since some ICNS icons</span>
+<span class='doccomment'>//! are PNG-encoded), as a convenience, the [`Image`](struct.Image.html) struct</span>
+<span class='doccomment'>//! also provides methods for [reading](struct.Image.html#method.read_png) and</span>
+<span class='doccomment'>//! [writing](struct.Image.html#method.write_png) PNG files.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! # Limitations</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! The ICNS format allows some icon types to be encoded either as PNG data or</span>
+<span class='doccomment'>//! as JPEG 2000 data; however, when encoding icons, this library always uses</span>
+<span class='doccomment'>//! PNG format, and when decoding icons, it cannot decode JPEG 2000 icons at</span>
+<span class='doccomment'>//! all (it will detect the JPEG 2000 header and return an error).  The reason</span>
+<span class='doccomment'>//! for this is the apparent lack of JPEG 2000 libraries for Rust; if this ever</span>
+<span class='doccomment'>//! changes, please feel free to file a bug or a send a pull request.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! Additionally, this library does not yet support many of the older icon</span>
+<span class='doccomment'>//! types used by earlier versions of Mac OS (such as `ICN#`, a 32x32 black and</span>
+<span class='doccomment'>//! white icon).  Again, pull requests (with suitable tests) are welcome.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! # Example usage</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! ```no_run</span>
+<span class='doccomment'>//! use icns::{IconFamily, IconType, Image};</span>
+<span class='doccomment'>//! use std::fs::File;</span>
+<span class='doccomment'>//! use std::io::{BufReader, BufWriter};</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! // Load an icon family from an ICNS file.</span>
+<span class='doccomment'>//! let file = BufReader::new(File::open(&quot;16.icns&quot;).unwrap());</span>
+<span class='doccomment'>//! let mut icon_family = IconFamily::read(file).unwrap();</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! // Extract an icon from the family and save it as a PNG.</span>
+<span class='doccomment'>//! let image = icon_family.get_icon_with_type(IconType::RGB24_16x16).unwrap();</span>
+<span class='doccomment'>//! let file = BufWriter::new(File::create(&quot;16.png&quot;).unwrap());</span>
+<span class='doccomment'>//! image.write_png(file).unwrap();</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! // Read in another icon from a PNG file, and add it to the icon family.</span>
+<span class='doccomment'>//! let file = BufReader::new(File::open(&quot;32.png&quot;).unwrap());</span>
+<span class='doccomment'>//! let image = Image::read_png(file).unwrap();</span>
+<span class='doccomment'>//! icon_family.add_icon(&amp;image).unwrap();</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! // Save the updated icon family to a new ICNS file.</span>
+<span class='doccomment'>//! let file = BufWriter::new(File::create(&quot;16-and-32.icns&quot;).unwrap());</span>
+<span class='doccomment'>//! icon_family.write(file).unwrap();</span>
+<span class='doccomment'>//! ```</span>
+
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>warn</span>(<span class='ident'>missing_docs</span>)]</span>
+
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>byteorder</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>png</span>;
+
+<span class='kw'>mod</span> <span class='ident'>element</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>element</span>::<span class='ident'>IconElement</span>;
+
+<span class='kw'>mod</span> <span class='ident'>family</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>family</span>::<span class='ident'>IconFamily</span>;
+
+<span class='kw'>mod</span> <span class='ident'>icontype</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>icontype</span>::{<span class='ident'>Encoding</span>, <span class='ident'>IconType</span>, <span class='ident'>OSType</span>};
+
+<span class='kw'>mod</span> <span class='ident'>image</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>image</span>::{<span class='ident'>Image</span>, <span class='ident'>PixelFormat</span>};
+</pre>
+</section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../../";
+        window.currentCrate = "icns";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../../jquery.js"></script>
+    <script src="../../../main.js"></script>
+    
+    <script defer src="../../../search-index.js"></script>
+</body>
+</html>
