@@ -12,9 +12,8 @@ other pixel formats (in case you need to transfer the image data to another
 library that expects the data in a particular format), and saving/loading those
 images to/from PNG files.
 
-The [`icns` crate documentation](
-https://mdsteele.github.io/rust-icns/icns/index.html) has more information
-about how to use the library.
+The [crate documentation](https://mdsteele.github.io/rust-icns/icns/index.html)
+has more information about how to use the library.
 
 ## Example usage
 
@@ -63,40 +62,40 @@ a pull request.
 
 | OSType | Description                             | Supported? |
 |--------|-----------------------------------------|------------|
-| ICON   | 32×32 1-bit icon                        | No         |
-| ICN#   | 32×32 1-bit icon with 1-bit mask        | No         |
-| icm#   | 16×12 1-bit icon with 1-bit mask        | No         |
-| icm4   | 16×12 4-bit icon                        | No         |
-| icm8   | 16×12 8-bit icon                        | No         |
-| ics#   | 16×16 1-bit mask                        | No         |
-| ics4   | 16×16 4-bit icon                        | No         |
-| ics8   | 16x16 8-bit icon                        | No         |
-| is32   | 16×16 24-bit icon                       | Yes        |
-| s8mk   | 16x16 8-bit mask                        | Yes        |
-| icl4   | 32×32 4-bit icon                        | No         |
-| icl8   | 32×32 8-bit icon                        | No         |
-| il32   | 32x32 24-bit icon                       | Yes        |
-| l8mk   | 32×32 8-bit mask                        | Yes        |
-| ich#   | 48×48 1-bit mask                        | No         |
-| ich4   | 48×48 4-bit icon                        | No         |
-| ich8   | 48×48 8-bit icon                        | No         |
-| ih32   | 48×48 24-bit icon                       | Yes        |
-| h8mk   | 48×48 8-bit mask                        | Yes        |
-| it32   | 128×128 24-bit icon                     | Yes        |
-| t8mk   | 128×128 8-bit mask                      | Yes        |
-| icp4   | 16x16 32-bit PNG/JP2 icon               | PNG only   |
-| icp5   | 32x32 32-bit PNG/JP2 icon               | PNG only   |
-| icp6   | 64x64 32-bit PNG/JP2 icon               | PNG only   |
-| ic07   | 128x128 32-bit PNG/JP2 icon             | PNG only   |
-| ic08   | 256×256 32-bit PNG/JP2 icon             | PNG only   |
-| ic09   | 512×512 32-bit PNG/JP2 icon             | PNG only   |
-| ic10   | 512x512@2x "retina" 32-bit PNG/JP2 icon | PNG only   |
-| ic11   | 16x16@2x "retina" 32-bit PNG/JP2 icon   | PNG only   |
-| ic12   | 32x32@2x "retina" 32-bit PNG/JP2 icon   | PNG only   |
-| ic13   | 128x128@2x "retina" 32-bit PNG/JP2 icon | PNG only   |
-| ic14   | 256x256@2x "retina" 32-bit PNG/JP2 icon | PNG only   |
+| `ICON` | 32×32 1-bit icon                        | No         |
+| `ICN#` | 32×32 1-bit icon with 1-bit mask        | No         |
+| `icm#` | 16×12 1-bit icon with 1-bit mask        | No         |
+| `icm4` | 16×12 4-bit icon                        | No         |
+| `icm8` | 16×12 8-bit icon                        | No         |
+| `ics#` | 16×16 1-bit mask                        | No         |
+| `ics4` | 16×16 4-bit icon                        | No         |
+| `ics8` | 16x16 8-bit icon                        | No         |
+| `is32` | 16×16 24-bit icon                       | Yes        |
+| `s8mk` | 16x16 8-bit mask                        | Yes        |
+| `icl4` | 32×32 4-bit icon                        | No         |
+| `icl8` | 32×32 8-bit icon                        | No         |
+| `il32` | 32x32 24-bit icon                       | Yes        |
+| `l8mk` | 32×32 8-bit mask                        | Yes        |
+| `ich#` | 48×48 1-bit mask                        | No         |
+| `ich4` | 48×48 4-bit icon                        | No         |
+| `ich8` | 48×48 8-bit icon                        | No         |
+| `ih32` | 48×48 24-bit icon                       | Yes        |
+| `h8mk` | 48×48 8-bit mask                        | Yes        |
+| `it32` | 128×128 24-bit icon                     | Yes        |
+| `t8mk` | 128×128 8-bit mask                      | Yes        |
+| `icp4` | 16x16 32-bit PNG/JP2 icon               | PNG only   |
+| `icp5` | 32x32 32-bit PNG/JP2 icon               | PNG only   |
+| `icp6` | 64x64 32-bit PNG/JP2 icon               | PNG only   |
+| `ic07` | 128x128 32-bit PNG/JP2 icon             | PNG only   |
+| `ic08` | 256×256 32-bit PNG/JP2 icon             | PNG only   |
+| `ic09` | 512×512 32-bit PNG/JP2 icon             | PNG only   |
+| `ic10` | 512x512@2x "retina" 32-bit PNG/JP2 icon | PNG only   |
+| `ic11` | 16x16@2x "retina" 32-bit PNG/JP2 icon   | PNG only   |
+| `ic12` | 32x32@2x "retina" 32-bit PNG/JP2 icon   | PNG only   |
+| `ic13` | 128x128@2x "retina" 32-bit PNG/JP2 icon | PNG only   |
+| `ic14` | 256x256@2x "retina" 32-bit PNG/JP2 icon | PNG only   |
 
 ## License
 
-`rust-icns` is made available under the
+rust-icns is made available under the
 [MIT License](http://spdx.org/licenses/MIT.html).
