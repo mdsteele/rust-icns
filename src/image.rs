@@ -4,6 +4,16 @@ use std;
 use std::io::{self, Read, Write};
 
 /// A decoded icon image.
+///
+/// An `Image` struct consists of a width, a height, a
+/// [`PixelFormat`](enum.PixelFormat.html), and a data array encoding the image
+/// pixels in that format.
+///
+/// Regardless of format, pixel data for an image is always stored one complete
+/// pixel at a time, in row-major order (that is, the top-left pixel comes
+/// first, followed by the rest of the top row from left to right; then comes
+/// the second row down, again from left to right, and so on until finally the
+/// bottom-right pixel comes last).
 #[derive(Clone)]
 pub struct Image {
     format: PixelFormat,
@@ -25,11 +35,41 @@ impl Image {
         }
     }
 
-    /// Creates a copy of this image using the specified pixel format.  This
-    /// operation always succeeds, but may lose information (e.g. converting
-    /// from RGBA to RGB will silently drop the alpha channel).  If the source
-    /// image is already in the requested format, this is equivalant to simply
-    /// calling `clone()`.
+    /// Returns the format in which this image's pixel data is stored.
+    pub fn pixel_format(&self) -> PixelFormat {
+        self.format
+    }
+
+    /// Returns the width of the image, in pixels.
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+
+    /// Returns the height of the image, in pixels.
+    pub fn height(&self) -> u32 {
+        self.height
+    }
+
+    /// Returns a reference to the image's pixel data.
+    pub fn data(&self) -> &[u8] {
+        &self.data
+    }
+
+    /// Returns a mutable reference to the image's pixel data.
+    pub fn data_mut(&mut self) -> &mut [u8] {
+        &mut self.data
+    }
+
+    /// Consumes the image, returning the pixel data without cloning it.
+    pub fn into_data(self) -> Box<[u8]> {
+        self.data
+    }
+
+    /// Creates a copy of this image by converting to the specified pixel
+    /// format.  This operation always succeeds, but may lose information (e.g.
+    /// converting from RGBA to RGB will silently drop the alpha channel).  If
+    /// the source image is already in the requested format, this is equivalant
+    /// to simply calling `clone()`.
     pub fn convert_to(&self, format: PixelFormat) -> Image {
         let new_data = match self.format {
             PixelFormat::RGBA => {
@@ -142,39 +182,18 @@ impl Image {
             }
         })
     }
-
-    /// Returns the format in which this image's pixel data is stored.
-    pub fn pixel_format(&self) -> PixelFormat {
-        self.format
-    }
-
-    /// Returns the width of the image, in pixels.
-    pub fn width(&self) -> u32 {
-        self.width
-    }
-
-    /// Returns the height of the image, in pixels.
-    pub fn height(&self) -> u32 {
-        self.height
-    }
-
-    /// Returns a reference to the image's pixel data.
-    pub fn data(&self) -> &[u8] {
-        &self.data
-    }
-
-    /// Returns a mutable reference to the image's pixel data.
-    pub fn data_mut(&mut self) -> &mut [u8] {
-        &mut self.data
-    }
-
-    /// Consumes the image, returning the pixel data without cloning it.
-    pub fn into_data(self) -> Box<[u8]> {
-        self.data
-    }
 }
 
-/// A format for storing pixel data in an image.
+/// Formats for storing pixel data in an image.
+///
+/// This type determines how the raw data array of an
+/// [`Image`](struct.Image.html) is to be interpreted.
+///
+/// Regardless of format, pixel data for an image is always stored one complete
+/// pixel at a time, in row-major order (that is, the top-left pixel comes
+/// first, followed by the rest of the top row from left to right; then comes
+/// the second row down, again from left to right, and so on until finally the
+/// bottom-right pixel comes last).
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum PixelFormat {
     /// 32-bit color with alpha channel.  Each pixel is four bytes, with red

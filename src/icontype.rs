@@ -2,6 +2,13 @@ use std;
 use std::fmt;
 
 /// Types of icon elements that can be decoded as images or masks.
+///
+/// This type enumerates the kinds of [`IconElement`](struct.IconElement.html)
+/// that can be decoded by this library; each `IconType` corresponds to a
+/// particular [`OSType`](struct.OSType.html).  The non-mask `IconType` values
+/// can also be used with the higher-level
+/// [`IconFamily`](struct.IconFamily.html) methods to encode and decode
+/// complete icons that consist of multiple `IconElements`.
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum IconType {
@@ -30,7 +37,7 @@ pub enum IconType {
     /// 32x32 32-bit icon at 2x "retina" density (so, 64 by 64 pixels).
     RGBA32_32x32_2x,
     /// 64x64 32-bit icon.  (For whatever reason, the ICNS format has no
-    /// corresponding type for 64x64 at 2x "retina" density.)
+    /// corresponding type for a 64x64 icon at 2x "retina" density.)
     RGBA32_64x64,
     /// 128x128 32-bit icon.
     RGBA32_128x128,
@@ -96,6 +103,47 @@ impl IconType {
             IconType::RGBA32_256x256_2x => OSType(*b"ic14"),
             IconType::RGBA32_512x512 => OSType(*b"ic09"),
             IconType::RGBA32_512x512_2x => OSType(*b"ic10"),
+        }
+    }
+
+    /// Returns true if this is icon type is a mask for some other icon type.
+    ///
+    /// # Examples
+    /// ```
+    /// use icns::IconType;
+    /// assert!(!IconType::RGB24_16x16.is_mask());
+    /// assert!(IconType::Mask8_16x16.is_mask());
+    /// assert!(!IconType::RGBA32_16x16.is_mask());
+    /// ```
+    pub fn is_mask(self) -> bool {
+        match self {
+            IconType::Mask8_16x16 |
+            IconType::Mask8_32x32 |
+            IconType::Mask8_48x48 |
+            IconType::Mask8_128x128 => true,
+            _ => false,
+        }
+    }
+
+    /// If this icon type has an associated mask type, returns that mask type;
+    /// if this is a mask icon type, or a non-mask icon type that has no
+    /// associated mask type, returns `None`.
+    ///
+    /// # Examples
+    /// ```
+    /// use icns::IconType;
+    /// assert_eq!(IconType::RGB24_16x16.mask_type(),
+    ///            Some(IconType::Mask8_16x16));
+    /// assert_eq!(IconType::Mask8_16x16.mask_type(), None);
+    /// assert_eq!(IconType::RGBA32_16x16.mask_type(), None);
+    /// ```
+    pub fn mask_type(self) -> Option<IconType> {
+        match self {
+            IconType::RGB24_16x16 => Some(IconType::Mask8_16x16),
+            IconType::RGB24_32x32 => Some(IconType::Mask8_32x32),
+            IconType::RGB24_48x48 => Some(IconType::Mask8_48x48),
+            IconType::RGB24_128x128 => Some(IconType::Mask8_128x128),
+            _ => None,
         }
     }
 
@@ -220,47 +268,6 @@ impl IconType {
         }
     }
 
-    /// Returns true if this is icon type is a mask for some other icon type.
-    ///
-    /// # Examples
-    /// ```
-    /// use icns::IconType;
-    /// assert!(!IconType::RGB24_16x16.is_mask());
-    /// assert!(IconType::Mask8_16x16.is_mask());
-    /// assert!(!IconType::RGBA32_16x16.is_mask());
-    /// ```
-    pub fn is_mask(self) -> bool {
-        match self {
-            IconType::Mask8_16x16 |
-            IconType::Mask8_32x32 |
-            IconType::Mask8_48x48 |
-            IconType::Mask8_128x128 => true,
-            _ => false,
-        }
-    }
-
-    /// If this icon type has an associated mask type, returns that mask type;
-    /// if this is a mask icon type, or a non-mask icon type that has no
-    /// associated mask type, returns `None`.
-    ///
-    /// # Examples
-    /// ```
-    /// use icns::IconType;
-    /// assert_eq!(IconType::RGB24_16x16.mask_type(),
-    ///            Some(IconType::Mask8_16x16));
-    /// assert_eq!(IconType::Mask8_16x16.mask_type(), None);
-    /// assert_eq!(IconType::RGBA32_16x16.mask_type(), None);
-    /// ```
-    pub fn mask_type(self) -> Option<IconType> {
-        match self {
-            IconType::RGB24_16x16 => Some(IconType::Mask8_16x16),
-            IconType::RGB24_32x32 => Some(IconType::Mask8_32x32),
-            IconType::RGB24_48x48 => Some(IconType::Mask8_48x48),
-            IconType::RGB24_128x128 => Some(IconType::Mask8_128x128),
-            _ => None,
-        }
-    }
-
     /// Returns the encoding used within an ICNS file for this icon type.
     pub fn encoding(self) -> Encoding {
         match self {
@@ -289,6 +296,15 @@ impl IconType {
 
 /// A Macintosh OSType (also known as a ResType), used in ICNS files to
 /// identify the type of each icon element.
+///
+/// An OSType is a four-byte identifier used throughout Mac OS.  In an ICNS
+/// file, it indicates the type of data stored in an
+/// [`IconElement`](struct.IconElement.html) data block.  For example, OSType
+/// `is32` represents 24-bit color data for a 16x16 icon, while OSType `s8mk`
+/// represents the 8-bit alpha mask for that same icon.
+///
+/// See the [`IconType`](enum.IconType.html) enum for an easier-to-use
+/// representation of icon data types.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct OSType(pub [u8; 4]);
 
@@ -327,7 +343,14 @@ impl std::str::FromStr for OSType {
     }
 }
 
-/// Method of encoding an image within an icon element.
+/// Methods of encoding an image within an icon element.
+///
+/// Each [`IconType`](enum.IconType.html) uses a particular encoding within
+/// an ICNS file; this type enumerates those encodings.
+///
+/// (This type is used internally by the library, but is irrelvant to most
+/// library users; if you're not sure whether you need to use it, you probably
+/// don't.)
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Encoding {
     /// Icon element data payload is an uncompressed 8-bit alpha mask.

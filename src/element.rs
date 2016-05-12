@@ -13,7 +13,7 @@ const JPEG_2000_FILE_MAGIC_NUMBER: [u8; 12] = [0x00, 0x00, 0x00, 0x0C, 0x6A,
                                                0x50, 0x20, 0x20, 0x0D, 0x0A,
                                                0x87, 0x0A];
 
-/// One entry in an ICNS file.  Depending on the resource type, this may
+/// One data block in an ICNS file.  Depending on the resource type, this may
 /// represent an icon, or part of an icon (such as an alpha mask, or color
 /// data without the mask).
 pub struct IconElement {
@@ -201,12 +201,6 @@ impl IconElement {
         IconType::from_ostype(self.ostype)
     }
 
-    /// Returns the encoded length of the element, in bytes, including the
-    /// length of the header.
-    pub fn total_length(&self) -> u32 {
-        ICON_ELEMENT_HEADER_LENGTH + (self.data.len() as u32)
-    }
-
     /// Reads an icon element from within an ICNS file.
     pub fn read<R: Read>(mut reader: R) -> io::Result<IconElement> {
         let mut raw_ostype = [0u8; 4];
@@ -229,6 +223,12 @@ impl IconElement {
         try!(writer.write_u32::<BigEndian>(self.total_length()));
         try!(writer.write_all(&self.data));
         Ok(())
+    }
+
+    /// Returns the encoded length of the element, in bytes, including the
+    /// length of the header.
+    pub fn total_length(&self) -> u32 {
+        ICON_ELEMENT_HEADER_LENGTH + (self.data.len() as u32)
     }
 }
 

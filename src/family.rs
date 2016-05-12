@@ -23,10 +23,10 @@ impl IconFamily {
         IconFamily { elements: Vec::new() }
     }
 
-    /// Encodes the image into the family, choosing the most appropriate icon
-    /// type (or types, if a separate mask element is needed) automatically.
-    /// Returns an error if there is no supported icon type matching the
-    /// dimensions of the image.
+    /// Encodes the image into the family, automatically choosing an
+    /// appropriate icon type based on the dimensions of the image.  Returns
+    /// an error if there is no supported icon type matching the image
+    /// dimensions.
     pub fn add_icon(&mut self, image: &Image) -> io::Result<()> {
         let icon_type = match (image.width(), image.height()) {
             (16, 16) => IconType::RGB24_16x16,
@@ -117,16 +117,6 @@ impl IconFamily {
         })
     }
 
-    /// Returns the encoded length of the file, in bytes, including the
-    /// length of the header.
-    pub fn total_length(&self) -> u32 {
-        let mut length = ICON_FAMILY_HEADER_LENGTH;
-        for element in &self.elements {
-            length += element.total_length();
-        }
-        length
-    }
-
     /// Reads an icon family from an ICNS file.
     pub fn read<R: Read>(mut reader: R) -> io::Result<IconFamily> {
         let mut magic = [0u8; 4];
@@ -154,6 +144,16 @@ impl IconFamily {
             try!(element.write(writer.by_ref()));
         }
         Ok(())
+    }
+
+    /// Returns the encoded length of the file, in bytes, including the
+    /// length of the header.
+    pub fn total_length(&self) -> u32 {
+        let mut length = ICON_FAMILY_HEADER_LENGTH;
+        for element in &self.elements {
+            length += element.total_length();
+        }
+        length
     }
 }
 
