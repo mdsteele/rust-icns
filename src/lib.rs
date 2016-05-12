@@ -75,7 +75,7 @@
 //! lower-level `IconElement` methods, icons from the ICNS file can be decoded
 //! into [`Image`](struct.Image.html) structs, which can be
 //! [converted](struct.Image.html#method.convert_to) to and from any of several
-//! [`PixelFormats`](struct.PixelFormat.html) to allow the raw pixel data to be
+//! [`PixelFormats`](enum.PixelFormat.html) to allow the raw pixel data to be
 //! easily transferred to another image library for further processing.  Since
 //! this library already depends on the PNG codec anyway (since some ICNS icons
 //! are PNG-encoded), as a convenience, the [`Image`](struct.Image.html) struct

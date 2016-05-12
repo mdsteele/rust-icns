@@ -7,8 +7,10 @@ use std::fmt;
 /// that can be decoded by this library; each `IconType` corresponds to a
 /// particular [`OSType`](struct.OSType.html).  The non-mask `IconType` values
 /// can also be used with the higher-level
-/// [`IconFamily`](struct.IconFamily.html) methods to encode and decode
-/// complete icons that consist of multiple `IconElements`.
+/// [`IconFamily`](struct.IconFamily.html) methods to
+/// [encode](struct.IconFamily.html#method.add_icon_with_type) and
+/// [decode](struct.IconFamily.html#method.get_icon_with_type) complete icons
+/// that consist of multiple `IconElements`.
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum IconType {
