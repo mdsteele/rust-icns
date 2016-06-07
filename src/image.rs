@@ -26,12 +26,38 @@ impl Image {
     /// Creates a new image with all pixel data set to zero.
     pub fn new(format: PixelFormat, width: u32, height: u32) -> Image {
         let data_bits = format.bits_per_pixel() * width * height;
-        let data_bytes = (data_bits + 7) / 8;
+        let data_bytes = ((data_bits + 7) / 8) as usize;
         Image {
             format: format,
             width: width,
             height: height,
-            data: vec![0u8; data_bytes as usize].into_boxed_slice(),
+            data: vec![0u8; data_bytes].into_boxed_slice(),
+        }
+    }
+
+    /// Creates a new image using the given pixel data.  Returns an error if
+    /// the data array is not the correct length.
+    pub fn from_data(format: PixelFormat,
+                     width: u32,
+                     height: u32,
+                     data: Vec<u8>)
+                     -> io::Result<Image> {
+        let data_bits = format.bits_per_pixel() * width * height;
+        let data_bytes = ((data_bits + 7) / 8) as usize;
+        if data.len() == data_bytes {
+            Ok(Image {
+                format: format,
+                width: width,
+                height: height,
+                data: data.into_boxed_slice(),
+            })
+        } else {
+            let msg = format!("incorrect pixel data array length for \
+                               speicifed format and dimensions ({} instead \
+                               of {})",
+                              data.len(),
+                              data_bytes);
+            Err(io::Error::new(io::ErrorKind::InvalidInput, msg))
         }
     }
 
@@ -460,6 +486,21 @@ fn alpha_to_gray(alpha: &[u8]) -> Box<[u8]> {
 mod tests {
     use super::*;
     use std::io::Cursor;
+
+    #[test]
+    fn image_from_data() {
+        let data: Vec<u8> = vec![255, 0, 0, 0, 255, 0, 0, 0, 255, 95, 95, 95];
+        let image = Image::from_data(PixelFormat::RGB, 2, 2, data.clone())
+                        .unwrap();
+        assert_eq!(image.data(), &data as &[u8]);
+    }
+
+    #[test]
+    fn image_from_data_wrong_size() {
+        let data: Vec<u8> = vec![1, 2, 3];
+        let result = Image::from_data(PixelFormat::Alpha, 2, 2, data);
+        assert!(result.is_err());
+    }
 
     #[test]
     fn alpha_to_gray() {

@@ -23,6 +23,12 @@ impl IconFamily {
         IconFamily { elements: Vec::new() }
     }
 
+    /// Returns true if the icon family contains no icons nor any other
+    /// elements.
+    pub fn is_empty(&self) -> bool {
+        self.elements.is_empty()
+    }
+
     /// Encodes the image into the family, automatically choosing an
     /// appropriate icon type based on the dimensions of the image.  Returns
     /// an error if there is no supported icon type matching the image
@@ -167,6 +173,7 @@ mod tests {
     #[test]
     fn write_empty_icon_family() {
         let family = IconFamily::new();
+        assert!(family.is_empty());
         assert_eq!(0, family.elements.len());
         let mut output: Vec<u8> = vec![];
         family.write(&mut output).expect("write failed");
