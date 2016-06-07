@@ -34,24 +34,15 @@ impl IconFamily {
     /// an error if there is no supported icon type matching the image
     /// dimensions.
     pub fn add_icon(&mut self, image: &Image) -> io::Result<()> {
-        let icon_type = match (image.width(), image.height()) {
-            (16, 16) => IconType::RGB24_16x16,
-            (32, 32) => IconType::RGB24_32x32,
-            (48, 48) => IconType::RGB24_48x48,
-            (64, 64) => IconType::RGBA32_64x64,
-            (128, 128) => IconType::RGB24_128x128,
-            (256, 256) => IconType::RGBA32_256x256,
-            (512, 512) => IconType::RGBA32_512x512,
-            (1024, 1024) => IconType::RGBA32_512x512_2x,
-            _ => {
-                let msg = format!("no supported icon type has dimensions \
-                                   {}x{}",
-                                  image.width(),
-                                  image.height());
-                return Err(Error::new(ErrorKind::InvalidInput, msg));
-            }
-        };
-        self.add_icon_with_type(image, icon_type)
+        if let Some(icon_type) = IconType::from_pixel_size(image.width(),
+                                                           image.height()) {
+            self.add_icon_with_type(image, icon_type)
+        } else {
+            let msg = format!("no supported icon type has dimensions {}x{}",
+                              image.width(),
+                              image.height());
+            Err(Error::new(ErrorKind::InvalidInput, msg))
+        }
     }
 
     /// Encodes the image into the family using the given icon type.  If the

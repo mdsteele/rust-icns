@@ -83,6 +83,67 @@ impl IconType {
         }
     }
 
+    /// Return a (non-mask) icon type that has the given pixel width/height, if
+    /// any.
+    ///
+    /// # Examples
+    /// ```
+    /// use icns::IconType;
+    /// assert_eq!(IconType::from_pixel_size(48, 48),
+    ///            Some(IconType::RGB24_48x48));
+    /// assert_eq!(IconType::from_pixel_size(256, 256),
+    ///            Some(IconType::RGBA32_256x256));
+    /// assert_eq!(IconType::from_pixel_size(1024, 1024),
+    ///            Some(IconType::RGBA32_512x512_2x));
+    /// ```
+    pub fn from_pixel_size(width: u32, height: u32) -> Option<IconType> {
+        match (width, height) {
+            (16, 16) => Some(IconType::RGB24_16x16),
+            (32, 32) => Some(IconType::RGB24_32x32),
+            (48, 48) => Some(IconType::RGB24_48x48),
+            (64, 64) => Some(IconType::RGBA32_64x64),
+            (128, 128) => Some(IconType::RGB24_128x128),
+            (256, 256) => Some(IconType::RGBA32_256x256),
+            (512, 512) => Some(IconType::RGBA32_512x512),
+            (1024, 1024) => Some(IconType::RGBA32_512x512_2x),
+            _ => None,
+        }
+    }
+
+    /// Return a (non-mask) icon type that has the given pixel width/height and
+    /// pixel density, if any.
+    ///
+    /// # Examples
+    /// ```
+    /// use icns::IconType;
+    /// assert_eq!(IconType::from_pixel_size_and_density(48, 48, 1),
+    ///            Some(IconType::RGB24_48x48));
+    /// assert_eq!(IconType::from_pixel_size_and_density(256, 256, 1),
+    ///            Some(IconType::RGBA32_256x256));
+    /// assert_eq!(IconType::from_pixel_size_and_density(256, 256, 2),
+    ///            Some(IconType::RGBA32_128x128_2x));
+    /// ```
+    pub fn from_pixel_size_and_density(width: u32,
+                                       height: u32,
+                                       density: u32)
+                                       -> Option<IconType> {
+        match (width, height, density) {
+            (16, 16, 1) => Some(IconType::RGB24_16x16),
+            (32, 32, 1) => Some(IconType::RGB24_32x32),
+            (32, 32, 2) => Some(IconType::RGBA32_16x16_2x),
+            (48, 48, 1) => Some(IconType::RGB24_48x48),
+            (64, 64, 1) => Some(IconType::RGBA32_64x64),
+            (64, 64, 2) => Some(IconType::RGBA32_32x32_2x),
+            (128, 128, 1) => Some(IconType::RGB24_128x128),
+            (256, 256, 1) => Some(IconType::RGBA32_256x256),
+            (256, 256, 2) => Some(IconType::RGBA32_128x128_2x),
+            (512, 512, 1) => Some(IconType::RGBA32_512x512),
+            (512, 512, 2) => Some(IconType::RGBA32_256x256_2x),
+            (1024, 1024, 2) => Some(IconType::RGBA32_512x512_2x),
+            _ => None,
+        }
+    }
+
     /// Get the OSType that represents this icon type.
     pub fn ostype(self) -> OSType {
         match self {
@@ -394,6 +455,33 @@ mod tests {
             let ostype = icon_type.ostype();
             let from = IconType::from_ostype(ostype);
             assert_eq!(Some(*icon_type), from);
+        }
+    }
+
+    #[test]
+    fn icon_type_size_round_trip() {
+        for icon_type in &ALL_ICON_TYPES {
+            let width = icon_type.pixel_width();
+            let height = icon_type.pixel_height();
+            let from = IconType::from_pixel_size(width, height).unwrap();
+            assert_eq!(from.pixel_width(), width);
+            assert_eq!(from.pixel_height(), height);
+        }
+    }
+
+    #[test]
+    fn icon_type_size_and_density_round_trip() {
+        for icon_type in &ALL_ICON_TYPES {
+            let width = icon_type.pixel_width();
+            let height = icon_type.pixel_height();
+            let density = icon_type.pixel_density();
+            let from = IconType::from_pixel_size_and_density(width,
+                                                             height,
+                                                             density)
+                           .unwrap();
+            assert_eq!(from.pixel_width(), width);
+            assert_eq!(from.pixel_height(), height);
+            assert_eq!(from.pixel_density(), density);
         }
     }
 
