@@ -86,6 +86,18 @@ impl IconFamily {
         result
     }
 
+    /// Determines whether the icon family contains a complete icon with the
+    /// given type (including the mask, if the given icon type has an
+    /// associated mask type).
+    pub fn has_icon_with_type(&self, icon_type: IconType) -> bool {
+        if self.find_element(icon_type).is_err() {
+            return false;
+        } else if let Some(mask_type) = icon_type.mask_type() {
+            return self.find_element(mask_type).is_ok();
+        }
+        true
+    }
+
     /// Decodes an image from the family with the given icon type.  If the
     /// selected type has an associated mask type, the two elements will
     /// decoded together into a single image.  Returns an error if the
@@ -158,8 +170,19 @@ impl IconFamily {
 mod tests {
     use super::*;
     use super::super::element::IconElement;
-    use super::super::icontype::OSType;
+    use super::super::icontype::{IconType, OSType};
+    use super::super::image::{Image, PixelFormat};
     use std::io::{Cursor, Read};
+
+    #[test]
+    fn icon_with_type() {
+        let mut family = IconFamily::new();
+        assert!(!family.has_icon_with_type(IconType::RGB24_16x16));
+        let image = Image::new(PixelFormat::Gray, 16, 16);
+        family.add_icon_with_type(&image, IconType::RGB24_16x16).unwrap();
+        assert!(family.has_icon_with_type(IconType::RGB24_16x16));
+        assert!(family.get_icon_with_type(IconType::RGB24_16x16).is_ok());
+    }
 
     #[test]
     fn write_empty_icon_family() {
