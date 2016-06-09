@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-288' class='srclink' href='../src/icns/src/icontype.rs.html#16-56' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-294' class='srclink' href='../src/icns/src/icontype.rs.html#16-56' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum IconType {
     RGB24_16x16,
     Mask8_16x16,
@@ -100,12 +100,38 @@ corresponding type for a 64x64 icon at 2x &quot;retina&quot; density.)</p>
 </div></td><td></td></tr><tr><td id='variant.RGBA32_512x512_2x'><code>RGBA32_512x512_2x</code></td><td><div class='docblock'><p>512x512 32-bit icon at 2x &quot;retina&quot; density (so, 1024 by 1024 pixels).</p>
 </div></td><td></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='enum' href='../icns/enum.IconType.html' title='icns::IconType'>IconType</a></code></h3><div class='impl-items'><h4 id='method.from_ostype' class='method'><code>fn <a href='#method.from_ostype' class='fnname'>from_ostype</a>(ostype: <a class='struct' href='../icns/struct.OSType.html' title='icns::OSType'>OSType</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='../icns/enum.IconType.html' title='icns::IconType'>IconType</a>&gt;</code></h4>
 <div class='docblock'><p>Get the icon type associated with the given OSType, if any.</p>
+</div><h4 id='method.from_pixel_size' class='method'><code>fn <a href='#method.from_pixel_size' class='fnname'>from_pixel_size</a>(width: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>, height: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='../icns/enum.IconType.html' title='icns::IconType'>IconType</a>&gt;</code></h4>
+<div class='docblock'><p>Return a (non-mask) icon type that has the given pixel width/height, if
+any.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>icns</span>::<span class='ident'>IconType</span>;
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>IconType</span>::<span class='ident'>from_pixel_size</span>(<span class='number'>48</span>, <span class='number'>48</span>),
+           <span class='prelude-val'>Some</span>(<span class='ident'>IconType</span>::<span class='ident'>RGB24_48x48</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>IconType</span>::<span class='ident'>from_pixel_size</span>(<span class='number'>256</span>, <span class='number'>256</span>),
+           <span class='prelude-val'>Some</span>(<span class='ident'>IconType</span>::<span class='ident'>RGBA32_256x256</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>IconType</span>::<span class='ident'>from_pixel_size</span>(<span class='number'>1024</span>, <span class='number'>1024</span>),
+           <span class='prelude-val'>Some</span>(<span class='ident'>IconType</span>::<span class='ident'>RGBA32_512x512_2x</span>));</pre>
+</div><h4 id='method.from_pixel_size_and_density' class='method'><code>fn <a href='#method.from_pixel_size_and_density' class='fnname'>from_pixel_size_and_density</a>(width: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>, height: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>, density: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='../icns/enum.IconType.html' title='icns::IconType'>IconType</a>&gt;</code></h4>
+<div class='docblock'><p>Return a (non-mask) icon type that has the given pixel width/height and
+pixel density, if any.</p>
+
+<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>icns</span>::<span class='ident'>IconType</span>;
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>IconType</span>::<span class='ident'>from_pixel_size_and_density</span>(<span class='number'>48</span>, <span class='number'>48</span>, <span class='number'>1</span>),
+           <span class='prelude-val'>Some</span>(<span class='ident'>IconType</span>::<span class='ident'>RGB24_48x48</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>IconType</span>::<span class='ident'>from_pixel_size_and_density</span>(<span class='number'>256</span>, <span class='number'>256</span>, <span class='number'>1</span>),
+           <span class='prelude-val'>Some</span>(<span class='ident'>IconType</span>::<span class='ident'>RGBA32_256x256</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>IconType</span>::<span class='ident'>from_pixel_size_and_density</span>(<span class='number'>256</span>, <span class='number'>256</span>, <span class='number'>2</span>),
+           <span class='prelude-val'>Some</span>(<span class='ident'>IconType</span>::<span class='ident'>RGBA32_128x128_2x</span>));</pre>
 </div><h4 id='method.ostype' class='method'><code>fn <a href='#method.ostype' class='fnname'>ostype</a>(self) -&gt; <a class='struct' href='../icns/struct.OSType.html' title='icns::OSType'>OSType</a></code></h4>
 <div class='docblock'><p>Get the OSType that represents this icon type.</p>
 </div><h4 id='method.is_mask' class='method'><code>fn <a href='#method.is_mask' class='fnname'>is_mask</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Returns true if this is icon type is a mask for some other icon type.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>icns</span>::<span class='ident'>IconType</span>;
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>IconType</span>::<span class='ident'>RGB24_16x16</span>.<span class='ident'>is_mask</span>());
@@ -116,7 +142,7 @@ corresponding type for a 64x64 icon at 2x &quot;retina&quot; density.)</p>
 if this is a mask icon type, or a non-mask icon type that has no
 associated mask type, returns <code>None</code>.</p>
 
-<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
+<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>icns</span>::<span class='ident'>IconType</span>;
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>IconType</span>::<span class='ident'>RGB24_16x16</span>.<span class='ident'>mask_type</span>(),
@@ -128,7 +154,7 @@ associated mask type, returns <code>None</code>.</p>
 same as the screen width, but for 2x &quot;retina&quot; density icons, this will
 be twice that value.</p>
 
-<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
+<h1 id='examples-4' class='section-header'><a href='#examples-4'>Examples</a></h1>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>icns</span>::<span class='ident'>IconType</span>;
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>IconType</span>::<span class='ident'>Mask8_128x128</span>.<span class='ident'>pixel_width</span>(), <span class='number'>128</span>);
@@ -139,7 +165,7 @@ be twice that value.</p>
 same as the screen height, but for 2x &quot;retina&quot; density icons, this will
 be twice that value.</p>
 
-<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1>
+<h1 id='examples-5' class='section-header'><a href='#examples-5'>Examples</a></h1>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>icns</span>::<span class='ident'>IconType</span>;
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>IconType</span>::<span class='ident'>Mask8_128x128</span>.<span class='ident'>pixel_height</span>(), <span class='number'>128</span>);
@@ -149,7 +175,7 @@ be twice that value.</p>
 <div class='docblock'><p>Returns the pixel density for this icon type -- that is, 2 for 2x
 &quot;retina&quot; density icons, or 1 for other icon types.</p>
 
-<h1 id='examples-4' class='section-header'><a href='#examples-4'>Examples</a></h1>
+<h1 id='examples-6' class='section-header'><a href='#examples-6'>Examples</a></h1>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>icns</span>::<span class='ident'>IconType</span>;
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>IconType</span>::<span class='ident'>Mask8_128x128</span>.<span class='ident'>pixel_density</span>(), <span class='number'>1</span>);
@@ -160,7 +186,7 @@ be twice that value.</p>
 as the pixel width, but for 2x &quot;retina&quot; density icons, this will be
 half that value.</p>
 
-<h1 id='examples-5' class='section-header'><a href='#examples-5'>Examples</a></h1>
+<h1 id='examples-7' class='section-header'><a href='#examples-7'>Examples</a></h1>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>icns</span>::<span class='ident'>IconType</span>;
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>IconType</span>::<span class='ident'>Mask8_128x128</span>.<span class='ident'>screen_width</span>(), <span class='number'>128</span>);
@@ -171,7 +197,7 @@ half that value.</p>
 as the pixel height, but for 2x &quot;retina&quot; density icons, this will be
 half that value.</p>
 
-<h1 id='examples-6' class='section-header'><a href='#examples-6'>Examples</a></h1>
+<h1 id='examples-8' class='section-header'><a href='#examples-8'>Examples</a></h1>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>icns</span>::<span class='ident'>IconType</span>;
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>IconType</span>::<span class='ident'>Mask8_128x128</span>.<span class='ident'>screen_height</span>(), <span class='number'>128</span>);

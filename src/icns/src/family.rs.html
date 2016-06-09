@@ -241,6 +241,27 @@
 <span id="198">198</span>
 <span id="199">199</span>
 <span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>byteorder</span>::{<span class='ident'>BigEndian</span>, <span class='ident'>ReadBytesExt</span>, <span class='ident'>WriteBytesExt</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='self'>self</span>, <span class='ident'>Error</span>, <span class='ident'>ErrorKind</span>, <span class='ident'>Read</span>, <span class='ident'>Write</span>};
@@ -267,29 +288,26 @@
         <span class='ident'>IconFamily</span> { <span class='ident'>elements</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>() }
     }
 
+    <span class='doccomment'>/// Returns true if the icon family contains no icons nor any other</span>
+    <span class='doccomment'>/// elements.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_empty</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+        <span class='self'>self</span>.<span class='ident'>elements</span>.<span class='ident'>is_empty</span>()
+    }
+
     <span class='doccomment'>/// Encodes the image into the family, automatically choosing an</span>
     <span class='doccomment'>/// appropriate icon type based on the dimensions of the image.  Returns</span>
     <span class='doccomment'>/// an error if there is no supported icon type matching the image</span>
     <span class='doccomment'>/// dimensions.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add_icon</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>image</span>: <span class='kw-2'>&amp;</span><span class='ident'>Image</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-        <span class='kw'>let</span> <span class='ident'>icon_type</span> <span class='op'>=</span> <span class='kw'>match</span> (<span class='ident'>image</span>.<span class='ident'>width</span>(), <span class='ident'>image</span>.<span class='ident'>height</span>()) {
-            (<span class='number'>16</span>, <span class='number'>16</span>) <span class='op'>=&gt;</span> <span class='ident'>IconType</span>::<span class='ident'>RGB24_16x16</span>,
-            (<span class='number'>32</span>, <span class='number'>32</span>) <span class='op'>=&gt;</span> <span class='ident'>IconType</span>::<span class='ident'>RGB24_32x32</span>,
-            (<span class='number'>48</span>, <span class='number'>48</span>) <span class='op'>=&gt;</span> <span class='ident'>IconType</span>::<span class='ident'>RGB24_48x48</span>,
-            (<span class='number'>64</span>, <span class='number'>64</span>) <span class='op'>=&gt;</span> <span class='ident'>IconType</span>::<span class='ident'>RGBA32_64x64</span>,
-            (<span class='number'>128</span>, <span class='number'>128</span>) <span class='op'>=&gt;</span> <span class='ident'>IconType</span>::<span class='ident'>RGB24_128x128</span>,
-            (<span class='number'>256</span>, <span class='number'>256</span>) <span class='op'>=&gt;</span> <span class='ident'>IconType</span>::<span class='ident'>RGBA32_256x256</span>,
-            (<span class='number'>512</span>, <span class='number'>512</span>) <span class='op'>=&gt;</span> <span class='ident'>IconType</span>::<span class='ident'>RGBA32_512x512</span>,
-            (<span class='number'>1024</span>, <span class='number'>1024</span>) <span class='op'>=&gt;</span> <span class='ident'>IconType</span>::<span class='ident'>RGBA32_512x512_2x</span>,
-            _ <span class='op'>=&gt;</span> {
-                <span class='kw'>let</span> <span class='ident'>msg</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;no supported icon type has dimensions \
-                                   {}x{}&quot;</span>,
-                                  <span class='ident'>image</span>.<span class='ident'>width</span>(),
-                                  <span class='ident'>image</span>.<span class='ident'>height</span>());
-                <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>ErrorKind</span>::<span class='ident'>InvalidInput</span>, <span class='ident'>msg</span>));
-            }
-        };
-        <span class='self'>self</span>.<span class='ident'>add_icon_with_type</span>(<span class='ident'>image</span>, <span class='ident'>icon_type</span>)
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>icon_type</span>) <span class='op'>=</span> <span class='ident'>IconType</span>::<span class='ident'>from_pixel_size</span>(<span class='ident'>image</span>.<span class='ident'>width</span>(),
+                                                           <span class='ident'>image</span>.<span class='ident'>height</span>()) {
+            <span class='self'>self</span>.<span class='ident'>add_icon_with_type</span>(<span class='ident'>image</span>, <span class='ident'>icon_type</span>)
+        } <span class='kw'>else</span> {
+            <span class='kw'>let</span> <span class='ident'>msg</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;no supported icon type has dimensions {}x{}&quot;</span>,
+                              <span class='ident'>image</span>.<span class='ident'>width</span>(),
+                              <span class='ident'>image</span>.<span class='ident'>height</span>());
+            <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>ErrorKind</span>::<span class='ident'>InvalidInput</span>, <span class='ident'>msg</span>))
+        }
     }
 
     <span class='doccomment'>/// Encodes the image into the family using the given icon type.  If the</span>
@@ -331,6 +349,18 @@
             }
         }
         <span class='ident'>result</span>
+    }
+
+    <span class='doccomment'>/// Determines whether the icon family contains a complete icon with the</span>
+    <span class='doccomment'>/// given type (including the mask, if the given icon type has an</span>
+    <span class='doccomment'>/// associated mask type).</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>has_icon_with_type</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>icon_type</span>: <span class='ident'>IconType</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>find_element</span>(<span class='ident'>icon_type</span>).<span class='ident'>is_err</span>() {
+            <span class='kw'>return</span> <span class='boolval'>false</span>;
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>mask_type</span>) <span class='op'>=</span> <span class='ident'>icon_type</span>.<span class='ident'>mask_type</span>() {
+            <span class='kw'>return</span> <span class='self'>self</span>.<span class='ident'>find_element</span>(<span class='ident'>mask_type</span>).<span class='ident'>is_ok</span>();
+        }
+        <span class='boolval'>true</span>
     }
 
     <span class='doccomment'>/// Decodes an image from the family with the given icon type.  If the</span>
@@ -405,12 +435,24 @@
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
     <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
     <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>super</span>::<span class='ident'>element</span>::<span class='ident'>IconElement</span>;
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>super</span>::<span class='ident'>icontype</span>::<span class='ident'>OSType</span>;
+    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>super</span>::<span class='ident'>icontype</span>::{<span class='ident'>IconType</span>, <span class='ident'>OSType</span>};
+    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>super</span>::<span class='ident'>image</span>::{<span class='ident'>Image</span>, <span class='ident'>PixelFormat</span>};
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='ident'>Cursor</span>, <span class='ident'>Read</span>};
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>icon_with_type</span>() {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>family</span> <span class='op'>=</span> <span class='ident'>IconFamily</span>::<span class='ident'>new</span>();
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>family</span>.<span class='ident'>has_icon_with_type</span>(<span class='ident'>IconType</span>::<span class='ident'>RGB24_16x16</span>));
+        <span class='kw'>let</span> <span class='ident'>image</span> <span class='op'>=</span> <span class='ident'>Image</span>::<span class='ident'>new</span>(<span class='ident'>PixelFormat</span>::<span class='ident'>Gray</span>, <span class='number'>16</span>, <span class='number'>16</span>);
+        <span class='ident'>family</span>.<span class='ident'>add_icon_with_type</span>(<span class='kw-2'>&amp;</span><span class='ident'>image</span>, <span class='ident'>IconType</span>::<span class='ident'>RGB24_16x16</span>).<span class='ident'>unwrap</span>();
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>family</span>.<span class='ident'>has_icon_with_type</span>(<span class='ident'>IconType</span>::<span class='ident'>RGB24_16x16</span>));
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>family</span>.<span class='ident'>get_icon_with_type</span>(<span class='ident'>IconType</span>::<span class='ident'>RGB24_16x16</span>).<span class='ident'>is_ok</span>());
+    }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>write_empty_icon_family</span>() {
         <span class='kw'>let</span> <span class='ident'>family</span> <span class='op'>=</span> <span class='ident'>IconFamily</span>::<span class='ident'>new</span>();
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>family</span>.<span class='ident'>is_empty</span>());
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>0</span>, <span class='ident'>family</span>.<span class='ident'>elements</span>.<span class='ident'>len</span>());
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>output</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[];
         <span class='ident'>family</span>.<span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>output</span>).<span class='ident'>expect</span>(<span class='string'>&quot;write failed&quot;</span>);

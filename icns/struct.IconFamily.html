@@ -55,6 +55,9 @@
                                   <td id='structfield.elements'><code>elements</code></td><td><div class='docblock'><p>The icon elements stored in the ICNS file.</p>
 </div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../icns/struct.IconFamily.html' title='icns::IconFamily'>IconFamily</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../icns/struct.IconFamily.html' title='icns::IconFamily'>IconFamily</a></code></h4>
 <div class='docblock'><p>Creates a new, empty icon family.</p>
+</div><h4 id='method.is_empty' class='method'><code>fn <a href='#method.is_empty' class='fnname'>is_empty</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Returns true if the icon family contains no icons nor any other
+elements.</p>
 </div><h4 id='method.add_icon' class='method'><code>fn <a href='#method.add_icon' class='fnname'>add_icon</a>(&amp;mut self, image: &amp;<a class='struct' href='../icns/struct.Image.html' title='icns::Image'>Image</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Encodes the image into the family, automatically choosing an
 appropriate icon type based on the dimensions of the image.  Returns
@@ -71,6 +74,10 @@ contains the necessary element(s) for a complete icon image (including
 alpha channel).  These icon types can be passed to the
 <a href="#method.get_icon_with_type"><code>get_icon_with_type</code></a> method to decode the
 icons.</p>
+</div><h4 id='method.has_icon_with_type' class='method'><code>fn <a href='#method.has_icon_with_type' class='fnname'>has_icon_with_type</a>(&amp;self, icon_type: <a class='enum' href='../icns/enum.IconType.html' title='icns::IconType'>IconType</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Determines whether the icon family contains a complete icon with the
+given type (including the mask, if the given icon type has an
+associated mask type).</p>
 </div><h4 id='method.get_icon_with_type' class='method'><code>fn <a href='#method.get_icon_with_type' class='fnname'>get_icon_with_type</a>(&amp;self, icon_type: <a class='enum' href='../icns/enum.IconType.html' title='icns::IconType'>IconType</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../icns/struct.Image.html' title='icns::Image'>Image</a>&gt;</code></h4>
 <div class='docblock'><p>Decodes an image from the family with the given icon type.  If the
 selected type has an associated mask type, the two elements will
