@@ -192,19 +192,16 @@ impl Image {
             PixelFormat::Gray => png::ColorType::Grayscale,
             PixelFormat::Alpha => {
                 return self.convert_to(PixelFormat::GrayAlpha)
-                           .write_png(output);
+                    .write_png(output);
             }
         };
         let mut encoder = png::Encoder::new(output, self.width, self.height);
         encoder.set(color_type).set(png::BitDepth::Eight);
         let mut writer = try!(encoder.write_header());
-        writer.write_image_data(&self.data).map_err(|err| {
-            match err {
-                png::EncodingError::IoError(err) => err,
-                png::EncodingError::Format(msg) => {
-                    io::Error::new(io::ErrorKind::InvalidData,
-                                   msg.into_owned())
-                }
+        writer.write_image_data(&self.data).map_err(|err| match err {
+            png::EncodingError::IoError(err) => err,
+            png::EncodingError::Format(msg) => {
+                io::Error::new(io::ErrorKind::InvalidData, msg.into_owned())
             }
         })
     }
@@ -491,7 +488,7 @@ mod tests {
     fn image_from_data() {
         let data: Vec<u8> = vec![255, 0, 0, 0, 255, 0, 0, 0, 255, 95, 95, 95];
         let image = Image::from_data(PixelFormat::RGB, 2, 2, data.clone())
-                        .unwrap();
+            .unwrap();
         assert_eq!(image.data(), &data as &[u8]);
     }
 
@@ -726,13 +723,12 @@ mod tests {
         image.data_mut().clone_from_slice(&gray_data);
         let mut output: Vec<u8> = Vec::new();
         image.write_png(&mut output).expect("failed to write PNG");
-        let expected: Vec<u8> = vec![137, 80, 78, 71, 13, 10, 26, 10, 0, 0,
-                                     0, 13, 73, 72, 68, 82, 0, 0, 0, 2, 0, 0,
-                                     0, 2, 8, 0, 0, 0, 0, 87, 221, 82, 248,
-                                     0, 0, 0, 17, 73, 68, 65, 84, 120, 1, 1,
-                                     6, 0, 249, 255, 1, 63, 64, 1, 191, 64,
-                                     4, 8, 1, 129, 255, 68, 9, 75, 0, 0, 0,
-                                     0, 73, 69, 78, 68, 174, 66, 96, 130];
+        let expected: Vec<u8> =
+            vec![137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68,
+                 82, 0, 0, 0, 2, 0, 0, 0, 2, 8, 0, 0, 0, 0, 87, 221, 82, 248,
+                 0, 0, 0, 14, 73, 68, 65, 84, 120, 156, 99, 180, 119, 96,
+                 220, 239, 0, 0, 4, 8, 1, 129, 134, 46, 201, 141, 0, 0, 0, 0,
+                 73, 69, 78, 68, 174, 66, 96, 130];
         assert_eq!(output, expected);
     }
 
@@ -744,14 +740,13 @@ mod tests {
         image.data_mut().clone_from_slice(&rgb_data);
         let mut output: Vec<u8> = Vec::new();
         image.write_png(&mut output).expect("failed to write PNG");
-        let expected: Vec<u8> = vec![137, 80, 78, 71, 13, 10, 26, 10, 0, 0,
-                                     0, 13, 73, 72, 68, 82, 0, 0, 0, 2, 0, 0,
-                                     0, 2, 8, 2, 0, 0, 0, 253, 212, 154, 115,
-                                     0, 0, 0, 25, 73, 68, 65, 84, 120, 1, 1,
-                                     14, 0, 241, 255, 1, 255, 0, 0, 1, 255,
-                                     0, 1, 0, 0, 255, 127, 127, 128, 29, 14,
-                                     4, 127, 112, 15, 131, 27, 0, 0, 0, 0,
-                                     73, 69, 78, 68, 174, 66, 96, 130];
+        let expected: Vec<u8> =
+            vec![137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68,
+                 82, 0, 0, 0, 2, 0, 0, 0, 2, 8, 2, 0, 0, 0, 253, 212, 154,
+                 115, 0, 0, 0, 20, 73, 68, 65, 84, 120, 156, 99, 252, 207,
+                 192, 0, 196, 140, 12, 12, 255, 235, 235, 27, 0, 29, 14, 4,
+                 127, 253, 15, 140, 153, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66,
+                 96, 130];
         assert_eq!(output, expected);
     }
 
@@ -763,30 +758,27 @@ mod tests {
         image.data_mut().clone_from_slice(&rgba_data);
         let mut output: Vec<u8> = Vec::new();
         image.write_png(&mut output).expect("failed to write PNG");
-        let expected: Vec<u8> = vec![137, 80, 78, 71, 13, 10, 26, 10, 0, 0,
-                                     0, 13, 73, 72, 68, 82, 0, 0, 0, 2, 0, 0,
-                                     0, 2, 8, 6, 0, 0, 0, 114, 182, 13, 36,
-                                     0, 0, 0, 29, 73, 68, 65, 84, 120, 1, 1,
-                                     18, 0, 237, 255, 1, 255, 0, 0, 63, 1,
-                                     255, 0, 64, 1, 0, 0, 255, 191, 127, 127,
-                                     128, 64, 49, 125, 5, 253, 198, 70, 247,
-                                     56, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66,
-                                     96, 130];
+        let expected: Vec<u8> =
+            vec![137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68,
+                 82, 0, 0, 0, 2, 0, 0, 0, 2, 8, 6, 0, 0, 0, 114, 182, 13, 36,
+                 0, 0, 0, 25, 73, 68, 65, 84, 120, 156, 99, 252, 207, 192,
+                 96, 15, 36, 28, 24, 25, 24, 254, 239, 175, 175, 111, 112, 0,
+                 0, 49, 125, 5, 253, 88, 193, 178, 240, 0, 0, 0, 0, 73, 69,
+                 78, 68, 174, 66, 96, 130];
         assert_eq!(output, expected);
     }
 
     #[test]
     fn read_rgba_png() {
-        let png: Vec<u8> = vec![137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13,
-                                73, 72, 68, 82, 0, 0, 0, 2, 0, 0, 0, 2, 8, 6,
-                                0, 0, 0, 114, 182, 13, 36, 0, 0, 0, 29, 73,
-                                68, 65, 84, 120, 1, 1, 18, 0, 237, 255, 1,
-                                255, 0, 0, 63, 1, 255, 0, 64, 1, 0, 0, 255,
-                                191, 127, 127, 128, 64, 49, 125, 5, 253, 198,
-                                70, 247, 56, 0, 0, 0, 0, 73, 69, 78, 68, 174,
-                                66, 96, 130];
+        let png: Vec<u8> =
+            vec![137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68,
+                 82, 0, 0, 0, 2, 0, 0, 0, 2, 8, 6, 0, 0, 0, 114, 182, 13, 36,
+                 0, 0, 0, 29, 73, 68, 65, 84, 120, 1, 1, 18, 0, 237, 255, 1,
+                 255, 0, 0, 63, 1, 255, 0, 64, 1, 0, 0, 255, 191, 127, 127,
+                 128, 64, 49, 125, 5, 253, 198, 70, 247, 56, 0, 0, 0, 0, 73,
+                 69, 78, 68, 174, 66, 96, 130];
         let image = Image::read_png(Cursor::new(&png))
-                        .expect("failed to read PNG");
+            .expect("failed to read PNG");
         assert_eq!(image.pixel_format(), PixelFormat::RGBA);
         assert_eq!(image.width(), 2);
         assert_eq!(image.height(), 2);
@@ -814,7 +806,7 @@ mod tests {
             image_1.write_png(&mut png_data).expect("failed to write PNG");
             // We should be able to read the PNG back in successfully.
             let mut image_2 = Image::read_png(Cursor::new(&png_data))
-                                  .expect("failed to read PNG");
+                .expect("failed to read PNG");
             // We may get the image back in a different pixel format.  However,
             // in such cases we should be able to convert back to the original
             // pixel format and still get back exactly the same data.

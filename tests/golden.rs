@@ -105,7 +105,7 @@ fn assert_images_match(image: &Image, reference: &Image) {
     assert_eq!(image.width(), reference.width());
     assert_eq!(image.height(), reference.height());
     assert_eq!(image.pixel_format(), reference.pixel_format());
-    assert_eq!(image.data(), reference.data());
+    assert!(image.data() == reference.data());
 }
 
 fn assert_families_match(family: &IconFamily, reference: &IconFamily) {
@@ -113,5 +113,5 @@ fn assert_families_match(family: &IconFamily, reference: &IconFamily) {
     family.write(&mut family_data).unwrap();
     let mut reference_data = Vec::<u8>::new();
     reference.write(&mut reference_data).unwrap();
-    assert_eq!(family_data, reference_data);
+    assert!(family_data == reference_data);
 }

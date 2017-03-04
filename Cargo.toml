@@ -9,5 +9,5 @@ keywords = ["icns", "icon", "image"]
 license = "MIT"
 
 [dependencies]
-byteorder = "0.5"
-png = "0.5"
+byteorder = "1"
+png = "0.6"

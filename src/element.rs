@@ -9,9 +9,8 @@ use super::image::{Image, PixelFormat};
 const ICON_ELEMENT_HEADER_LENGTH: u32 = 8;
 
 /// The first twelve bytes of a JPEG 2000 file are always this:
-const JPEG_2000_FILE_MAGIC_NUMBER: [u8; 12] = [0x00, 0x00, 0x00, 0x0C, 0x6A,
-                                               0x50, 0x20, 0x20, 0x0D, 0x0A,
-                                               0x87, 0x0A];
+const JPEG_2000_FILE_MAGIC_NUMBER: [u8; 12] =
+    [0x00, 0x00, 0x00, 0x0C, 0x6A, 0x50, 0x20, 0x20, 0x0D, 0x0A, 0x87, 0x0A];
 
 /// One data block in an ICNS file.  Depending on the resource type, this may
 /// represent an icon, or part of an icon (such as an alpha mask, or color
@@ -250,8 +249,7 @@ fn encode_rle(input: &[u8],
             let mut run_length = 1;
             while pixel + run_length < num_pixels &&
                   input[num_input_channels * (pixel + run_length) +
-                        channel] == value &&
-                  run_length < 130 {
+                  channel] == value && run_length < 130 {
                 run_length += 1;
             }
             if run_length >= 3 {
@@ -278,7 +276,7 @@ fn encode_rle(input: &[u8],
             output.push((literal_length - 1) as u8);
             for i in 0..literal_length {
                 output.push(input[num_input_channels * (literal_start + i) +
-                                  channel]);
+                            channel]);
             }
             literal_start += literal_length;
         }
@@ -417,7 +415,7 @@ mod tests {
         let mask_data = vec![78u8; 256];
         let mask_element = IconElement::new(OSType(*b"s8mk"), mask_data);
         let image = color_element.decode_image_with_mask(&mask_element)
-                                 .expect("failed to decode image");
+            .expect("failed to decode image");
         assert_eq!(image.pixel_format(), PixelFormat::RGBA);
         assert_eq!(image.width(), 16);
         assert_eq!(image.height(), 16);

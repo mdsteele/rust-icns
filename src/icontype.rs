@@ -475,10 +475,9 @@ mod tests {
             let width = icon_type.pixel_width();
             let height = icon_type.pixel_height();
             let density = icon_type.pixel_density();
-            let from = IconType::from_pixel_size_and_density(width,
-                                                             height,
-                                                             density)
-                           .unwrap();
+            let from =
+                IconType::from_pixel_size_and_density(width, height, density)
+                    .unwrap();
             assert_eq!(from.pixel_width(), width);
             assert_eq!(from.pixel_height(), height);
             assert_eq!(from.pixel_density(), density);
@@ -536,6 +535,6 @@ mod tests {
         assert_eq!(OSType::from_str("ab\u{2603}d"),
                    Err("OSType chars must have value of at most 0xFF \
                         (found 0x2603)"
-                           .to_string()));
+                       .to_string()));
     }
 }

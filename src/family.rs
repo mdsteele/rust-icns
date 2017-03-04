@@ -172,7 +172,7 @@ mod tests {
     use super::super::element::IconElement;
     use super::super::icontype::{IconType, OSType};
     use super::super::image::{Image, PixelFormat};
-    use std::io::{Cursor, Read};
+    use std::io::Cursor;
 
     #[test]
     fn icon_with_type() {
@@ -210,9 +210,9 @@ mod tests {
     fn write_icon_family_with_fake_elements() {
         let mut family = IconFamily::new();
         family.elements
-              .push(IconElement::new(OSType(*b"quux"), b"foobar".to_vec()));
+            .push(IconElement::new(OSType(*b"quux"), b"foobar".to_vec()));
         family.elements
-              .push(IconElement::new(OSType(*b"baz!"), b"#".to_vec()));
+            .push(IconElement::new(OSType(*b"baz!"), b"#".to_vec()));
         let mut output: Vec<u8> = vec![];
         family.write(&mut output).expect("write failed");
         assert_eq!(b"icns\0\0\0\x1fquux\0\0\0\x0efoobarbaz!\0\0\0\x09#",

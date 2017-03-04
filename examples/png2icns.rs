@@ -40,21 +40,21 @@ fn main() {
     let png_path = env::args().nth(1).unwrap();
     let png_path = Path::new(&png_path);
     let png_file = BufReader::new(File::open(png_path)
-                                      .expect("failed to open PNG file"));
+        .expect("failed to open PNG file"));
     let image = Image::read_png(png_file).expect("failed to read PNG file");
     let mut family = IconFamily::new();
     let icns_path = if num_args == 3 {
         let ostype = OSType::from_str(&env::args().nth(2).unwrap()).unwrap();
         let icon_type = IconType::from_ostype(ostype)
-                            .expect("unsupported ostype");
+            .expect("unsupported ostype");
         family.add_icon_with_type(&image, icon_type)
-              .expect("failed to encode image");
+            .expect("failed to encode image");
         png_path.with_extension(format!("{}.icns", ostype))
     } else {
         family.add_icon(&image).expect("failed to encode image");
         png_path.with_extension("icns")
     };
     let icns_file = BufWriter::new(File::create(icns_path)
-                                       .expect("failed to create ICNS file"));
+        .expect("failed to create ICNS file"));
     family.write(icns_file).expect("failed to write ICNS file");
 }
