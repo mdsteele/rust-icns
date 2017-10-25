@@ -7,7 +7,8 @@ repository = "https://github.com/mdsteele/rust-icns"
 documentation = "http://mdsteele.github.io/rust-icns/"
 keywords = ["icns", "icon", "image"]
 license = "MIT"
+readme = "README.md"
 
 [dependencies]
 byteorder = "1"
-png = "0.6"
+png = "0.11"
