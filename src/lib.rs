@@ -124,7 +124,12 @@
 #![warn(missing_docs)]
 
 extern crate byteorder;
+
+#[cfg(feature = "pngio")]
 extern crate png;
+
+#[cfg(feature = "pngio")]
+mod pngio;
 
 mod element;
 pub use self::element::IconElement;
