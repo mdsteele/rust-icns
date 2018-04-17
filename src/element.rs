@@ -107,10 +107,10 @@ impl IconElement {
     /// or the higher-level [`IconFamily.get_icon_with_type`](
     /// struct.IconFamily.html#method.get_icon_with_type) method.
     pub fn decode_image(&self) -> io::Result<Image> {
-        let icon_type = try!(self.icon_type().ok_or_else(|| {
+        let icon_type = self.icon_type().ok_or_else(|| {
             Error::new(ErrorKind::InvalidInput,
                        format!("unsupported OSType: {}", self.ostype))
-        }));
+        })?;
         let width = icon_type.pixel_width();
         let height = icon_type.pixel_width();
         match icon_type.encoding() {
@@ -121,7 +121,7 @@ impl IconElement {
                                data, which is not yet supported";
                     return Err(Error::new(ErrorKind::InvalidInput, msg));
                 }
-                let image = try!(Image::read_png(io::Cursor::new(&self.data)));
+                let image = Image::read_png(io::Cursor::new(&self.data))?;
                 if image.width() != width || image.height() != height {
                     let msg = format!("decoded PNG has wrong dimensions \
                                        ({}x{} instead of {}x{})",
@@ -137,7 +137,7 @@ impl IconElement {
             Encoding::JP2PNG => unimplemented!(),
             Encoding::RLE24 => {
                 let mut image = Image::new(PixelFormat::RGB, width, height);
-                try!(decode_rle(&self.data, 3, image.data_mut()));
+                decode_rle(&self.data, 3, image.data_mut())?;
                 Ok(image)
             }
             Encoding::Mask8 => {
@@ -168,14 +168,14 @@ impl IconElement {
     pub fn decode_image_with_mask(&self,
                                   mask: &IconElement)
                                   -> io::Result<Image> {
-        let icon_type = try!(self.icon_type().ok_or_else(|| {
+        let icon_type = self.icon_type().ok_or_else(|| {
             Error::new(ErrorKind::InvalidInput,
                        format!("unsupported OSType: {}", self.ostype))
-        }));
-        let mask_type = try!(icon_type.mask_type().ok_or_else(|| {
+        })?;
+        let mask_type = icon_type.mask_type().ok_or_else(|| {
             let msg = format!("icon type {:?} does not use a mask", icon_type);
             Error::new(ErrorKind::InvalidInput, msg)
-        }));
+        })?;
         assert_eq!(icon_type.encoding(), Encoding::RLE24);
         if mask.ostype != mask_type.ostype() {
             let msg = format!("wrong OSType for mask ('{}' instead of '{}')",
@@ -194,7 +194,7 @@ impl IconElement {
             return Err(Error::new(ErrorKind::InvalidInput, msg));
         }
         let mut image = Image::new(PixelFormat::RGBA, width, height);
-        try!(decode_rle(&self.data, 4, image.data_mut()));
+        decode_rle(&self.data, 4, image.data_mut())?;
         for (i, &alpha) in mask.data.iter().enumerate() {
             image.data_mut()[4 * i + 3] = alpha;
         }
@@ -210,24 +210,24 @@ impl IconElement {
     /// Reads an icon element from within an ICNS file.
     pub fn read<R: Read>(mut reader: R) -> io::Result<IconElement> {
         let mut raw_ostype = [0u8; 4];
-        try!(reader.read_exact(&mut raw_ostype));
-        let element_length = try!(reader.read_u32::<BigEndian>());
+        reader.read_exact(&mut raw_ostype)?;
+        let element_length = reader.read_u32::<BigEndian>()?;
         if element_length < ICON_ELEMENT_HEADER_LENGTH {
             return Err(Error::new(ErrorKind::InvalidData,
                                   "invalid element length"));
         }
         let data_length = element_length - ICON_ELEMENT_HEADER_LENGTH;
         let mut data = vec![0u8; data_length as usize];
-        try!(reader.read_exact(&mut data));
+        reader.read_exact(&mut data)?;
         Ok(IconElement::new(OSType(raw_ostype), data))
     }
 
     /// Writes the icon element to within an ICNS file.
     pub fn write<W: Write>(&self, mut writer: W) -> io::Result<()> {
         let OSType(ref raw_ostype) = self.ostype;
-        try!(writer.write_all(raw_ostype));
-        try!(writer.write_u32::<BigEndian>(self.total_length()));
-        try!(writer.write_all(&self.data));
+        writer.write_all(raw_ostype)?;
+        writer.write_u32::<BigEndian>(self.total_length())?;
+        writer.write_all(&self.data)?;
         Ok(())
     }
 
@@ -313,20 +313,20 @@ fn decode_rle(input: &[u8],
     for channel in 0..3 {
         for pixel in 0..num_pixels {
             if remaining == 0 {
-                let next: u8 = *try!(iter.next().ok_or_else(rle_error));
+                let next: u8 = *iter.next().ok_or_else(rle_error)?;
                 if next < 128 {
                     remaining = (next as usize) + 1;
                     within_run = false;
                 } else {
                     remaining = (next as usize) - 125;
                     within_run = true;
-                    run_value = *try!(iter.next().ok_or_else(rle_error));
+                    run_value = *iter.next().ok_or_else(rle_error)?;
                 }
             }
             output[num_output_channels * pixel + channel] = if within_run {
                 run_value
             } else {
-                *try!(iter.next().ok_or_else(rle_error))
+                *iter.next().ok_or_else(rle_error)?
             };
             remaining -= 1;
         }

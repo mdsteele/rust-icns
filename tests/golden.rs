@@ -91,13 +91,13 @@ fn encoder_test(png_name: &str, icon_type: IconType, icns_name: &str) {
 
 fn load_icns_file(name: &str) -> io::Result<IconFamily> {
     let path = format!("tests/icns/{}", name);
-    let file = BufReader::new(try!(File::open(path)));
+    let file = BufReader::new(File::open(path)?);
     IconFamily::read(file)
 }
 
 fn load_png_file(name: &str) -> io::Result<Image> {
     let path = format!("tests/png/{}", name);
-    let file = BufReader::new(try!(File::open(path)));
+    let file = BufReader::new(File::open(path)?);
     Image::read_png(file)
 }
 

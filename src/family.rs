@@ -54,11 +54,11 @@ impl IconFamily {
                               icon_type: IconType)
                               -> io::Result<()> {
         self.elements
-            .push(try!(IconElement::encode_image_with_type(image, icon_type)));
+            .push(IconElement::encode_image_with_type(image, icon_type)?);
         if let Some(mask_type) = icon_type.mask_type() {
             self.elements
-                .push(try!(IconElement::encode_image_with_type(image,
-                                                               mask_type)));
+                .push(IconElement::encode_image_with_type(image,
+                                                               mask_type)?);
         }
         Ok(())
     }
@@ -106,9 +106,9 @@ impl IconFamily {
     pub fn get_icon_with_type(&self,
                               icon_type: IconType)
                               -> io::Result<Image> {
-        let element = try!(self.find_element(icon_type));
+        let element = self.find_element(icon_type)?;
         if let Some(mask_type) = icon_type.mask_type() {
-            let mask = try!(self.find_element(mask_type));
+            let mask = self.find_element(mask_type)?;
             element.decode_image_with_mask(mask)
         } else {
             element.decode_image()
@@ -129,16 +129,16 @@ impl IconFamily {
     /// Reads an icon family from an ICNS file.
     pub fn read<R: Read>(mut reader: R) -> io::Result<IconFamily> {
         let mut magic = [0u8; 4];
-        try!(reader.read_exact(&mut magic));
+        reader.read_exact(&mut magic)?;
         if magic != *ICNS_MAGIC_LITERAL {
             let msg = "not an icns file (wrong magic literal)";
             return Err(Error::new(ErrorKind::InvalidData, msg));
         }
-        let file_length = try!(reader.read_u32::<BigEndian>());
+        let file_length = reader.read_u32::<BigEndian>()?;
         let mut file_position: u32 = ICON_FAMILY_HEADER_LENGTH;
         let mut family = IconFamily::new();
         while file_position < file_length {
-            let element = try!(IconElement::read(reader.by_ref()));
+            let element = IconElement::read(reader.by_ref())?;
             file_position += element.total_length();
             family.elements.push(element);
         }
@@ -147,10 +147,10 @@ impl IconFamily {
 
     /// Writes the icon family to an ICNS file.
     pub fn write<W: Write>(&self, mut writer: W) -> io::Result<()> {
-        try!(writer.write_all(ICNS_MAGIC_LITERAL));
-        try!(writer.write_u32::<BigEndian>(self.total_length()));
+        writer.write_all(ICNS_MAGIC_LITERAL)?;
+        writer.write_u32::<BigEndian>(self.total_length())?;
         for element in &self.elements {
-            try!(element.write(writer.by_ref()));
+            element.write(writer.by_ref())?;
         }
         Ok(())
     }

@@ -376,7 +376,7 @@ impl fmt::Display for OSType {
         let &OSType(raw) = self;
         for &byte in &raw {
             let character = std::char::from_u32(u32::from(byte)).unwrap();
-            try!(write!(out, "{}", character));
+            write!(out, "{}", character)?;
         }
         Ok(())
     }
