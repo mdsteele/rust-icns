@@ -4,14 +4,13 @@ version = "0.2.2"
 authors = ["Matthew D. Steele <mdsteele@alum.mit.edu>"]
 description = "A library for encoding/decoding Apple Icon Image (.icns) files."
 repository = "https://github.com/mdsteele/rust-icns"
-documentation = "http://mdsteele.github.io/rust-icns/"
 keywords = ["icns", "icon", "image"]
 license = "MIT"
 readme = "README.md"
 
 [dependencies]
 byteorder = "1"
-png = { version = "0.12", optional = true }
+png = { version = "0.13", optional = true }
 
 [features]
 default = ["pngio"]

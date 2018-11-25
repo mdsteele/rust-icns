@@ -2,7 +2,7 @@
 
 A Rust library for encoding/decoding Apple Icon Image (.icns) files.
 
-Documentation: https://mdsteele.github.io/rust-icns/
+Documentation: https://docs.rs/icns
 
 ## Overview
 
@@ -12,8 +12,8 @@ other pixel formats (in case you need to transfer the image data to another
 library that expects the data in a particular format), and saving/loading those
 images to/from PNG files.
 
-The [crate documentation](https://mdsteele.github.io/rust-icns/icns/index.html)
-has more information about how to use the library.
+The [crate documentation](https://docs.rs/icns) has more information about how
+to use the library.
 
 ## Example usage
 
