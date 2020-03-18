@@ -261,7 +261,7 @@ fn encode_rle(input: &[u8],
             }
             if run_length >= 3 {
                 while literal_start < pixel {
-                    let literal_length = cmp::min(256, pixel - literal_start);
+                    let literal_length = cmp::min(128, pixel - literal_start);
                     output.push((literal_length - 1) as u8);
                     for i in 0..literal_length {
                         output.push(input[num_input_channels *
@@ -279,7 +279,7 @@ fn encode_rle(input: &[u8],
             }
         }
         while literal_start < pixel {
-            let literal_length = cmp::min(256, pixel - literal_start);
+            let literal_length = cmp::min(128, pixel - literal_start);
             output.push((literal_length - 1) as u8);
             for i in 0..literal_length {
                 output.push(input[num_input_channels * (literal_start + i) +
