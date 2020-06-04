@@ -1,5 +1,4 @@
 use png;
-use png::HasParameters;
 use std::io::{self, Read, Write};
 use image::{Image, PixelFormat};
 
@@ -49,7 +48,8 @@ impl Image {
             }
         };
         let mut encoder = png::Encoder::new(output, self.width, self.height);
-        encoder.set(color_type).set(png::BitDepth::Eight);
+        encoder.set_color(color_type);
+        encoder.set_depth(png::BitDepth::Eight);
         let mut writer = encoder.write_header()?;
         writer.write_image_data(&self.data).map_err(|err| match err {
             png::EncodingError::IoError(err) => err,
