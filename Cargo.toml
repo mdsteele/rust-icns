@@ -11,7 +11,8 @@ readme = "README.md"
 [dependencies]
 byteorder = "1"
 png = { version = "0.16", optional = true }
-
+jp2k = "0.3.1"
+rips = "0.3.0"
 [features]
 default = ["pngio"]
 pngio = ["png"]

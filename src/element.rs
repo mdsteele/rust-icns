@@ -1,5 +1,6 @@
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::cmp;
+use std::convert::TryInto;
 use std::io::{self, Error, ErrorKind, Read, Write};
 
 use super::icontype::{Encoding, IconType, OSType};
@@ -113,13 +114,36 @@ impl IconElement {
         match icon_type.encoding() {
             #[cfg(feature = "pngio")]
             Encoding::JP2PNG => {
+                let image: Image;
                 if self.data.starts_with(&JPEG_2000_FILE_MAGIC_NUMBER) {
-                    let msg = "element to be decoded contains JPEG 2000 \
-                               data, which is not yet supported";
-                    return Err(Error::new(ErrorKind::InvalidInput, msg));
+                    let bytes = &self.data[12..];
+                    let codec = jp2k::Codec::jp2();
+                    let stream = jp2k::Stream::from_bytes(bytes).unwrap();
+                    // let stream = jp2k::Stream::from_file("/mnt/c/projects/iiif-server/cache/remote/322930.jp2").unwrap();
+
+                    let jp2k::ImageBuffer { buffer, width, height, num_bands } = jp2k::ImageBuffer::build(
+                        codec,
+                        stream,
+                        jp2k::DecodeParams::default().with_reduce_factor(1),
+                    )
+                    .unwrap();
+
+                    let image_rip = rips::Image::from_memory(
+                        buffer,
+                        width as i32,
+                        height as i32,
+                        num_bands as i32,
+                        rips::VipsBandFormat::VIPS_FORMAT_UCHAR,
+                    )
+                    .unwrap();
+                    // Rip image to imagem
+                   image = Image::read_png(io::Cursor::new(image_rip.to_bytes())).unwrap()
+
+                }else{
+                    image = Image::read_png(io::Cursor::new(&self.data))?;
                 }
-                let image = Image::read_png(io::Cursor::new(&self.data))?;
-                if image.width() != width || image.height() != height {
+                
+                if image.width() != width.try_into().unwrap() || image.height() != height.try_into().unwrap() {
                     let msg = format!("decoded PNG has wrong dimensions \
                                        ({}x{} instead of {}x{})",
                                       image.width(),
