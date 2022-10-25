@@ -84,14 +84,7 @@
 //!
 //! # Limitations
 //!
-//! The ICNS format allows some icon types to be encoded either as PNG data or
-//! as JPEG 2000 data; however, when encoding icons, this library always uses
-//! PNG format, and when decoding icons, it cannot decode JPEG 2000 icons at
-//! all (it will detect the JPEG 2000 header and return an error).  The reason
-//! for this is the apparent lack of JPEG 2000 libraries for Rust; if this ever
-//! changes, please feel free to file a bug or a send a pull request.
-//!
-//! Additionally, this library does not yet support many of the older icon
+//! This library does not yet support many of the older icon
 //! types used by earlier versions of Mac OS (such as `ICN#`, a 32x32 black and
 //! white icon).  Again, pull requests (with suitable tests) are welcome.
 //!
