@@ -86,7 +86,7 @@
 //!
 //! This library does not yet support many of the older icon
 //! types used by earlier versions of Mac OS (such as `ICN#`, a 32x32 black and
-//! white icon).  Again, pull requests (with suitable tests) are welcome.
+//! white icon). Pull requests (with suitable tests) are welcome.
 //!
 //! # Example usage
 //!

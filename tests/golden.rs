@@ -2,7 +2,7 @@ extern crate icns;
 
 use icns::{IconFamily, IconType, Image};
 use std::fs::File;
-use std::io::{self, BufReader, BufWriter};
+use std::io::{self, BufReader};
 
 #[test]
 fn decode_is32() {
