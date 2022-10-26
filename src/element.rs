@@ -1,6 +1,5 @@
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::cmp;
-use std::convert::TryInto;
 use std::io::{self, Error, ErrorKind, Read, Write};
 
 use super::icontype::{Encoding, IconType, OSType};
@@ -112,7 +111,6 @@ impl IconElement {
         let width = icon_type.pixel_width();
         let height = icon_type.pixel_width();
         match icon_type.encoding() {
-            #[cfg(feature = "pngio")]
             Encoding::JP2PNG => {
                 let image: Image;
                 if self.data.starts_with(&JPEG_2000_FILE_MAGIC_NUMBER) {
@@ -135,14 +133,13 @@ impl IconElement {
                         rips::VipsBandFormat::VIPS_FORMAT_UCHAR,
                     )
                     .unwrap();
-                    // Rip image to imagem
                    image = Image::read_png(io::Cursor::new(image_rip.to_bytes())).unwrap()
 
                 }else{
                     image = Image::read_png(io::Cursor::new(&self.data))?;
                 }
                 
-                if image.width() != width.try_into().unwrap() || image.height() != height.try_into().unwrap() {
+                if image.width() != width || image.height() != height {
                     let msg = format!("decoded PNG has wrong dimensions \
                                        ({}x{} instead of {}x{})",
                                       image.width(),
