@@ -79,6 +79,11 @@ fn decode_ic13() {
     decoder_test("ic13.icns", IconType::RGBA32_128x128_2x, "256x256.png");
 }
 
+#[test]
+fn decode_ic08(){
+    decoder_test("ic08.icns", IconType::RGBA32_256x256, "256x256.png");
+}
+
 
 
 
