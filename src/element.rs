@@ -114,28 +114,35 @@ impl IconElement {
             Encoding::JP2PNG => {
                 let image: Image;
                 if self.data.starts_with(&JPEG_2000_FILE_MAGIC_NUMBER) {
-                    let bytes = &self.data[12..];
-                    let codec = jp2k::Codec::jp2();
-                    let stream = jp2k::Stream::from_bytes(bytes).unwrap();
+                    let j2k_image = match jpeg2k::Image::from_bytes(&self.data) {
+                        Ok(image) => image,
+                        Err(e) => {
+                            return Err(io::Error::new(
+                                io::ErrorKind::InvalidData,
+                                e,
+                            ))
+                        }
+                    };
+                    let alpha_default = 255u8; // Full opacity
+                    let pixels =
+                        j2k_image.get_pixels(Some(alpha_default)).map_err(
+                            |e| io::Error::new(io::ErrorKind::InvalidData, e),
+                        )?;
 
-                    let jp2k::ImageBuffer { buffer, width, height, num_bands } = jp2k::ImageBuffer::build(
-                        codec,
-                        stream,
-                        jp2k::DecodeParams::default().with_reduce_factor(1),
-                    )
-                    .unwrap();
+                    let pixel_format = match pixels.format {
+                        jpeg2k::ImageFormat::L8 => PixelFormat::Gray,
+                        jpeg2k::ImageFormat::La8 => PixelFormat::GrayAlpha,
+                        jpeg2k::ImageFormat::Rgb8 => PixelFormat::RGB,
+                        jpeg2k::ImageFormat::Rgba8 => PixelFormat::RGBA,
+                    };
 
-                    let image_rip = rips::Image::from_memory(
-                        buffer,
-                        width as i32,
-                        height as i32,
-                        num_bands as i32,
-                        rips::VipsBandFormat::VIPS_FORMAT_UCHAR,
-                    )
-                    .unwrap();
-                   image = Image::read_png(io::Cursor::new(image_rip.to_bytes())).unwrap()
-
-                }else{
+                    image = Image::from_data(
+                        pixel_format,
+                        pixels.width,
+                        pixels.height,
+                        pixels.data,
+                    )?;
+                } else {
                     image = Image::read_png(io::Cursor::new(&self.data))?;
                 }
                 
