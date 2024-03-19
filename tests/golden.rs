@@ -84,6 +84,11 @@ fn decode_ic08(){
     decoder_test("ic08.icns", IconType::RGBA32_256x256, "256x256.png");
 }
 
+#[test]
+fn decode_jpeg2000_256x256() {
+    decoder_test("loom.icns", IconType::RGBA32_512x512, "loom-512x512.png");
+}
+
 
 
 
