@@ -54,13 +54,6 @@ The table below indicates which types are currently supported; see
 https://en.wikipedia.org/wiki/Apple_Icon_Image_format#Icon_types for more
 information about each type.
 
-The biggest limitation at this time is that a number of the newer icon types
-can be encoded with either PNG or JPEG 2000 data, but this library does not yet
-support JPEG 2000; attempting to decode such an icon will result an an error
-value being returned (although you can still decode other icons from the same
-ICNS file).  The reason for this is that I don't currently know of any JPEG
-2000 libraries for Rust; if one exists, please feel free to file a bug or send
-a pull request.
 
 | OSType | Description                             | Supported? |
 |--------|-----------------------------------------|------------|
@@ -85,17 +78,17 @@ a pull request.
 | `h8mk` | 48×48 8-bit mask                        | Yes        |
 | `it32` | 128×128 24-bit icon                     | Yes        |
 | `t8mk` | 128×128 8-bit mask                      | Yes        |
-| `icp4` | 16x16 32-bit PNG/JP2 icon               | PNG only   |
-| `icp5` | 32x32 32-bit PNG/JP2 icon               | PNG only   |
-| `icp6` | 64x64 32-bit PNG/JP2 icon               | PNG only   |
-| `ic07` | 128x128 32-bit PNG/JP2 icon             | PNG only   |
-| `ic08` | 256×256 32-bit PNG/JP2 icon             | PNG only   |
-| `ic09` | 512×512 32-bit PNG/JP2 icon             | PNG only   |
-| `ic10` | 512x512@2x "retina" 32-bit PNG/JP2 icon | PNG only   |
-| `ic11` | 16x16@2x "retina" 32-bit PNG/JP2 icon   | PNG only   |
-| `ic12` | 32x32@2x "retina" 32-bit PNG/JP2 icon   | PNG only   |
-| `ic13` | 128x128@2x "retina" 32-bit PNG/JP2 icon | PNG only   |
-| `ic14` | 256x256@2x "retina" 32-bit PNG/JP2 icon | PNG only   |
+| `icp4` | 16x16 32-bit PNG/JP2 icon               | Yes        |
+| `icp5` | 32x32 32-bit PNG/JP2 icon               | Yes        |
+| `icp6` | 64x64 32-bit PNG/JP2 icon               | Yes        |
+| `ic07` | 128x128 32-bit PNG/JP2 icon             | Yes        |
+| `ic08` | 256×256 32-bit PNG/JP2 icon             | Yes        |
+| `ic09` | 512×512 32-bit PNG/JP2 icon             | Yes        |
+| `ic10` | 512x512@2x "retina" 32-bit PNG/JP2 icon | Yes        |
+| `ic11` | 16x16@2x "retina" 32-bit PNG/JP2 icon   | Yes        |
+| `ic12` | 32x32@2x "retina" 32-bit PNG/JP2 icon   | Yes        |
+| `ic13` | 128x128@2x "retina" 32-bit PNG/JP2 icon | Yes        |
+| `ic14` | 256x256@2x "retina" 32-bit PNG/JP2 icon | Yes        |
 
 ## License
 
