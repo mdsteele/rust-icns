@@ -1,4 +1,3 @@
-use std;
 use std::fmt;
 
 /// Types of icon elements that can be decoded as images or masks.
@@ -179,13 +178,11 @@ impl IconType {
     /// assert!(!IconType::RGBA32_16x16.is_mask());
     /// ```
     pub fn is_mask(self) -> bool {
-        match self {
-            IconType::Mask8_16x16 |
-            IconType::Mask8_32x32 |
-            IconType::Mask8_48x48 |
-            IconType::Mask8_128x128 => true,
-            _ => false,
-        }
+        matches!(self,
+                 IconType::Mask8_16x16 |
+                 IconType::Mask8_32x32 |
+                 IconType::Mask8_48x48 |
+                 IconType::Mask8_128x128)
     }
 
     /// If this icon type has an associated mask type, returns that mask type;
@@ -394,10 +391,10 @@ impl std::str::FromStr for OSType {
         let mut bytes = [0u8; 4];
         for (i, &ch) in chars.iter().enumerate() {
             let value = ch as u32;
-            if value > std::u8::MAX as u32 {
+            if value > u8::MAX as u32 {
                 return Err(format!("OSType chars must have value of at \
                                     most 0x{:X} (found 0x{:X})",
-                                   std::u8::MAX,
+                                   u8::MAX,
                                    value));
             }
             bytes[i] = value as u8;

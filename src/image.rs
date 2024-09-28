@@ -1,4 +1,3 @@
-use std;
 use std::io;
 
 /// A decoded icon image.
@@ -26,9 +25,9 @@ impl Image {
         let data_bits = format.bits_per_pixel() * width * height;
         let data_bytes = ((data_bits + 7) / 8) as usize;
         Image {
-            format: format,
-            width: width,
-            height: height,
+            format,
+            width,
+            height,
             data: vec![0u8; data_bytes].into_boxed_slice(),
         }
     }
@@ -44,9 +43,9 @@ impl Image {
         let data_bytes = ((data_bits + 7) / 8) as usize;
         if data.len() == data_bytes {
             Ok(Image {
-                format: format,
-                width: width,
-                height: height,
+                format,
+                width,
+                height,
                 data: data.into_boxed_slice(),
             })
         } else {
@@ -143,7 +142,7 @@ impl Image {
             }
         };
         Image {
-            format: format,
+            format,
             width: self.width,
             height: self.height,
             data: new_data,
@@ -212,7 +211,7 @@ fn rgb_to_rgba(rgb: &[u8]) -> Box<[u8]> {
     let mut rgba = Vec::with_capacity(num_pixels * 4);
     for i in 0..num_pixels {
         rgba.extend_from_slice(&rgb[(3 * i)..(3 * i + 3)]);
-        rgba.push(std::u8::MAX);
+        rgba.push(u8::MAX);
     }
     rgba.into_boxed_slice()
 }
@@ -271,7 +270,7 @@ fn rgb_to_grayalpha(rgb: &[u8]) -> Box<[u8]> {
         let green = u32::from(rgb[3 * i + 1]);
         let blue = u32::from(rgb[3 * i + 2]);
         gray.push(((red + green + blue) / 3) as u8);
-        gray.push(std::u8::MAX);
+        gray.push(u8::MAX);
     }
     gray.into_boxed_slice()
 }
@@ -291,7 +290,7 @@ fn rgba_to_alpha(rgba: &[u8]) -> Box<[u8]> {
 fn rgb_to_alpha(rgb: &[u8]) -> Box<[u8]> {
     assert_eq!(rgb.len() % 3, 0);
     let num_pixels = rgb.len() / 3;
-    vec![std::u8::MAX; num_pixels].into_boxed_slice()
+    vec![u8::MAX; num_pixels].into_boxed_slice()
 }
 
 /// Converts grayscale-with-alpha image data into RGBA.
@@ -356,7 +355,7 @@ fn gray_to_rgba(gray: &[u8]) -> Box<[u8]> {
         rgba.push(value);
         rgba.push(value);
         rgba.push(value);
-        rgba.push(std::u8::MAX);
+        rgba.push(u8::MAX);
     }
     rgba.into_boxed_slice()
 }
@@ -379,14 +378,14 @@ fn gray_to_grayalpha(gray: &[u8]) -> Box<[u8]> {
     let mut grayalpha = Vec::with_capacity(num_pixels * 2);
     for &value in gray {
         grayalpha.push(value);
-        grayalpha.push(std::u8::MAX);
+        grayalpha.push(u8::MAX);
     }
     grayalpha.into_boxed_slice()
 }
 
 /// Converts grayscale image data into an alpha mask.
 fn gray_to_alpha(gray: &[u8]) -> Box<[u8]> {
-    vec![std::u8::MAX; gray.len()].into_boxed_slice()
+    vec![u8::MAX; gray.len()].into_boxed_slice()
 }
 
 /// Converts alpha mask image data into RGBA.
