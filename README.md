@@ -1,8 +1,10 @@
 # rust-icns
 
-A Rust library for encoding/decoding Apple Icon Image (.icns) files.
+[![Build Status](https://github.com/mdsteele/rust-icns/actions/workflows/tests.yml/badge.svg)](https://github.com/mdsteele/rust-icns/actions/workflows/tests.yml)
+[![Crates.io](https://img.shields.io/crates/v/icns.svg)](https://crates.io/crates/icns)
+[![Documentation](https://docs.rs/icns/badge.svg)](https://docs.rs/icns)
 
-Documentation: https://docs.rs/icns
+A Rust library for encoding/decoding Apple Icon Image (.icns) files.
 
 ## Overview
 

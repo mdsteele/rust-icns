@@ -1,0 +1,43 @@
+name: tests
+
+on:
+  push:
+    paths-ignore:
+      - 'LICENSE-*'
+      - '**.md'
+  pull_request:
+    paths-ignore:
+      - 'LICENSE-*'
+      - '**.md'
+
+jobs:
+  tests:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest]
+        rust: [ stable ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+      - name: Test
+        run: cargo test --verbose
+
+  linters:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Install rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - name: Cargo fmt
+        run: cargo fmt --all -- --check
+      - name: Cargo clippy
+        run: cargo clippy --all-features -- -D warnings
