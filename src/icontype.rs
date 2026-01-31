@@ -13,6 +13,16 @@ use std::fmt;
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum IconType {
+    /// 32x32 1-bit icon (without alpha)
+    Mono_32x32,
+    /// 32x32 1-bit icon with alpha
+    MonoA_32x32,
+    /// 16x12 1-bit icon with alpha
+    MonoA_16x12,
+    /// 16x16 1-bit icon with alpha
+    MonoA_16x16,
+    /// 48x48 1-bit icon with alpha
+    MonoA_48x48,
     /// 16x16 24-bit icon (without alpha).
     RGB24_16x16,
     /// 16x16 8-bit alpha mask.
@@ -59,10 +69,15 @@ impl IconType {
     pub fn from_ostype(ostype: OSType) -> Option<IconType> {
         let OSType(raw_ostype) = ostype;
         match &raw_ostype {
+            b"ICON" => Some(IconType::Mono_32x32),
+            b"ICN#" => Some(IconType::MonoA_32x32),
+            b"icm#" => Some(IconType::MonoA_16x12),
+            b"ics#" => Some(IconType::MonoA_16x16),
             b"is32" => Some(IconType::RGB24_16x16),
             b"s8mk" => Some(IconType::Mask8_16x16),
             b"il32" => Some(IconType::RGB24_32x32),
             b"l8mk" => Some(IconType::Mask8_32x32),
+            b"ich#" => Some(IconType::MonoA_48x48),
             b"ih32" => Some(IconType::RGB24_48x48),
             b"h8mk" => Some(IconType::Mask8_48x48),
             b"it32" => Some(IconType::RGB24_128x128),
@@ -97,6 +112,7 @@ impl IconType {
     /// ```
     pub fn from_pixel_size(width: u32, height: u32) -> Option<IconType> {
         match (width, height) {
+            (16, 12) => Some(IconType::MonoA_16x12),
             (16, 16) => Some(IconType::RGB24_16x16),
             (32, 32) => Some(IconType::RGB24_32x32),
             (48, 48) => Some(IconType::RGB24_48x48),
@@ -127,6 +143,7 @@ impl IconType {
                                        density: u32)
                                        -> Option<IconType> {
         match (width, height, density) {
+            (16, 12, 1) => Some(IconType::MonoA_16x12),
             (16, 16, 1) => Some(IconType::RGB24_16x16),
             (32, 32, 1) => Some(IconType::RGB24_32x32),
             (32, 32, 2) => Some(IconType::RGBA32_16x16_2x),
@@ -146,10 +163,15 @@ impl IconType {
     /// Get the OSType that represents this icon type.
     pub fn ostype(self) -> OSType {
         match self {
+            IconType::Mono_32x32 => OSType(*b"ICON"),
+            IconType::MonoA_32x32 => OSType(*b"ICN#"),
+            IconType::MonoA_16x12 => OSType(*b"icm#"),
+            IconType::MonoA_16x16 => OSType(*b"ics#"),
             IconType::RGB24_16x16 => OSType(*b"is32"),
             IconType::Mask8_16x16 => OSType(*b"s8mk"),
             IconType::RGB24_32x32 => OSType(*b"il32"),
             IconType::Mask8_32x32 => OSType(*b"l8mk"),
+            IconType::MonoA_48x48 => OSType(*b"ich#"),
             IconType::RGB24_48x48 => OSType(*b"ih32"),
             IconType::Mask8_48x48 => OSType(*b"h8mk"),
             IconType::RGB24_128x128 => OSType(*b"it32"),
@@ -271,10 +293,15 @@ impl IconType {
     /// ```
     pub fn screen_width(self) -> u32 {
         match self {
+            IconType::Mono_32x32 => 32,
+            IconType::MonoA_32x32 => 32,
+            IconType::MonoA_16x12 => 16,
+            IconType::MonoA_16x16 => 16,
             IconType::RGB24_16x16 => 16,
             IconType::Mask8_16x16 => 16,
             IconType::RGB24_32x32 => 32,
             IconType::Mask8_32x32 => 32,
+            IconType::MonoA_48x48 => 48,
             IconType::RGB24_48x48 => 48,
             IconType::Mask8_48x48 => 48,
             IconType::RGB24_128x128 => 128,
@@ -306,10 +333,15 @@ impl IconType {
     /// ```
     pub fn screen_height(self) -> u32 {
         match self {
+            IconType::Mono_32x32 => 32,
+            IconType::MonoA_32x32 => 32,
+            IconType::MonoA_16x12 => 12,
+            IconType::MonoA_16x16 => 16,
             IconType::RGB24_16x16 => 16,
             IconType::Mask8_16x16 => 16,
             IconType::RGB24_32x32 => 32,
             IconType::Mask8_32x32 => 32,
+            IconType::MonoA_48x48 => 48,
             IconType::RGB24_48x48 => 48,
             IconType::Mask8_48x48 => 48,
             IconType::RGB24_128x128 => 128,
@@ -331,6 +363,11 @@ impl IconType {
     /// Returns the encoding used within an ICNS file for this icon type.
     pub fn encoding(self) -> Encoding {
         match self {
+            IconType::Mono_32x32 => Encoding::Mono,
+            IconType::MonoA_32x32 |
+            IconType::MonoA_16x12 |
+            IconType::MonoA_16x16 |
+            IconType::MonoA_48x48 => Encoding::MonoA,
             IconType::RGB24_16x16 |
             IconType::RGB24_32x32 |
             IconType::RGB24_48x48 |
@@ -413,6 +450,10 @@ impl std::str::FromStr for OSType {
 /// don't.)
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Encoding {
+    /// Icon element data payload is an uncompressed one bit image
+    Mono,
+    /// Icon element data payload is an uncompressed one bit image with a one bit mask
+    MonoA,
     /// Icon element data payload is an uncompressed 8-bit alpha mask.
     Mask8,
     /// Icon element data payload is an RLE-compressed 24-bit RGB image.
@@ -426,25 +467,32 @@ mod tests {
     use super::*;
     use std::str::FromStr;
 
-    const ALL_ICON_TYPES: [IconType; 19] = [IconType::RGB24_16x16,
-                                            IconType::Mask8_16x16,
-                                            IconType::RGB24_32x32,
-                                            IconType::Mask8_32x32,
-                                            IconType::RGB24_48x48,
-                                            IconType::Mask8_48x48,
-                                            IconType::RGB24_128x128,
-                                            IconType::Mask8_128x128,
-                                            IconType::RGBA32_16x16,
-                                            IconType::RGBA32_16x16_2x,
-                                            IconType::RGBA32_32x32,
-                                            IconType::RGBA32_32x32_2x,
-                                            IconType::RGBA32_64x64,
-                                            IconType::RGBA32_128x128,
-                                            IconType::RGBA32_128x128_2x,
-                                            IconType::RGBA32_256x256,
-                                            IconType::RGBA32_256x256_2x,
-                                            IconType::RGBA32_512x512,
-                                            IconType::RGBA32_512x512_2x];
+    const ALL_ICON_TYPES: [IconType; 24] = [
+        IconType::Mono_32x32,
+        IconType::MonoA_32x32,
+        IconType::MonoA_16x12,
+        IconType::MonoA_16x16,
+        IconType::RGB24_16x16,
+        IconType::Mask8_16x16,
+        IconType::RGB24_32x32,
+        IconType::Mask8_32x32,
+        IconType::MonoA_48x48,
+        IconType::RGB24_48x48,
+        IconType::Mask8_48x48,
+        IconType::RGB24_128x128,
+        IconType::Mask8_128x128,
+        IconType::RGBA32_16x16,
+        IconType::RGBA32_16x16_2x,
+        IconType::RGBA32_32x32,
+        IconType::RGBA32_32x32_2x,
+        IconType::RGBA32_64x64,
+        IconType::RGBA32_128x128,
+        IconType::RGBA32_128x128_2x,
+        IconType::RGBA32_256x256,
+        IconType::RGBA32_256x256_2x,
+        IconType::RGBA32_512x512,
+        IconType::RGBA32_512x512_2x,
+    ];
 
     #[test]
     fn icon_type_ostype_round_trip() {
@@ -501,7 +549,7 @@ mod tests {
                         panic!("{:?} is missing a mask type", icon_type);
                     }
                 }
-                Encoding::JP2PNG => {
+                Encoding::Mono | Encoding::MonoA | Encoding::JP2PNG => {
                     assert!(!icon_type.is_mask());
                     assert_eq!(icon_type.mask_type(), None);
                 }

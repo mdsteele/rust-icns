@@ -88,6 +88,32 @@ impl IconElement {
                 let image = image.convert_to(PixelFormat::Alpha);
                 data = image.into_data().into_vec();
             }
+            Encoding::Mono => {
+                let image = image.convert_to(PixelFormat::Gray);
+                assert!(image.data().len() % 8 == 0);
+                data = vec![0; image.data.len() / 8];
+                for (i, e) in image.into_data().iter().enumerate() {
+                    // Arbitrarily threshold gray values to black and white
+                    if *e < 128 {
+                        data[i / 8] |= 1 << (7 - (i % 8));
+                    }
+                }
+            }
+            Encoding::MonoA => {
+                let image = image.convert_to(PixelFormat::GrayAlpha);
+                assert!(image.data().len() % 16 == 0);
+                data = vec![0; image.data.len() / 8];
+                let (mono, alpha) = data.split_at_mut(image.data.len() / 16);
+                for (i, e) in image.into_data().chunks_exact(2).enumerate() {
+                    // Arbitrarily threshold gray values to black and white
+                    if e[0] < 128 {
+                        mono[i / 8] |= 1 << (7 - (i % 8));
+                    }
+                    if e[1] >= 128 {
+                        alpha[i / 8] |= 1 << (7 - (i % 8));
+                    }
+                }
+            }
         }
         Ok(IconElement::new(icon_type.ostype(), data))
     }
@@ -109,7 +135,7 @@ impl IconElement {
                        format!("unsupported OSType: {}", self.ostype))
         })?;
         let width = icon_type.pixel_width();
-        let height = icon_type.pixel_width();
+        let height = icon_type.pixel_height();
         match icon_type.encoding() {
             #[cfg(feature = "pngio")]
             Encoding::JP2PNG => {
@@ -139,15 +165,69 @@ impl IconElement {
             }
             Encoding::Mask8 => {
                 let num_pixels = width * height;
-                if self.data.len() as u32 != num_pixels {
-                    let msg = format!("wrong data payload length ({} \
+                if self.data.len() != num_pixels as usize {
+                    let msg = format!(
+                        "wrong data payload length ({} \
                                        instead of {})",
-                                      self.data.len(),
-                                      num_pixels);
+                        self.data.len(),
+                        num_pixels
+                    );
                     return Err(Error::new(ErrorKind::InvalidData, msg));
                 }
                 let mut image = Image::new(PixelFormat::Alpha, width, height);
-                image.data_mut().clone_from_slice(&self.data);
+                image.data_mut().copy_from_slice(&self.data);
+                Ok(image)
+            }
+            Encoding::Mono => {
+                assert!(width * height % 8 == 0);
+                let num_bytes = (width * height) / 8;
+                if self.data.len() != num_bytes as usize {
+                    let msg = format!(
+                        "wrong data payload length ({} \
+                                       instead of {})",
+                        self.data.len(),
+                        num_bytes
+                    );
+                    return Err(Error::new(ErrorKind::InvalidData, msg));
+                }
+                let mut image = Image::new(PixelFormat::Gray, width, height);
+                let out = image.data_mut();
+                for (i, b) in self.data.iter().enumerate() {
+                    for d in 0..8 {
+                        out[8 * i + d] = 0xff - 0xff * ((b >> (7 - d)) & 0x1)
+                    }
+                }
+                Ok(image)
+            }
+            Encoding::MonoA => {
+                assert!(width * height % 8 == 0);
+                let num_bytes = (width * height) / 4;
+                if self.data.len() != num_bytes as usize {
+                    let msg = format!(
+                        "wrong data payload length ({} \
+                                       instead of {})",
+                        self.data.len(),
+                        num_bytes
+                    );
+                    return Err(Error::new(ErrorKind::InvalidData, msg));
+                }
+                let mut image =
+                    Image::new(PixelFormat::GrayAlpha, width, height);
+                let out = image.data_mut();
+                let (mono, alpha) =
+                    self.data.split_at((num_bytes / 2) as usize);
+
+                for (i, b) in mono.iter().enumerate() {
+                    for d in 0..8 {
+                        out[16 * i + 2 * d] =
+                            0xff - 0xff * ((b >> (7 - d)) & 0x1)
+                    }
+                }
+                for (i, b) in alpha.iter().enumerate() {
+                    for d in 0..8 {
+                        out[16 * i + 2 * d + 1] = 0xff * ((b >> (7 - d)) & 0x1)
+                    }
+                }
                 Ok(image)
             }
         }
