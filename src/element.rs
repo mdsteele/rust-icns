@@ -4,6 +4,7 @@ use std::io::{self, Error, ErrorKind, Read, Write};
 
 use super::icontype::{Encoding, IconType, OSType};
 use super::image::{Image, PixelFormat};
+use super::palette::{PALETTE16, PALETTE256};
 
 /// The length of an icon element header, in bytes:
 const ICON_ELEMENT_HEADER_LENGTH: u32 = 8;
@@ -116,6 +117,26 @@ impl IconElement {
                     if e[1] >= 128 {
                         alpha[i / 8] |= 1 << (7 - (i % 8));
                     }
+                }
+            }
+            Encoding::Palette4 => {
+                let image = image.convert_to(PixelFormat::RGB);
+                data = vec![0; image.data.len() / 6];
+                for (i, pix) in image.data().chunks_exact(3).enumerate() {
+                    let pix: [u8; 3] = [pix[0], pix[1], pix[2]];
+                    let best_index = nearest_match(pix, &PALETTE16[..]);
+                    data[i / 2] |= best_index << (4 * (1 - (i % 2)));
+                }
+            }
+            Encoding::Palette8 => {
+                // Identify nearest palette color by brute force. This is very slow,
+                // but the largest paletted icon elements are just 48x48
+                let image = image.convert_to(PixelFormat::RGB);
+                data = vec![0; image.data.len() / 3];
+                for (i, pix) in image.data().chunks_exact(3).enumerate() {
+                    let pix: [u8; 3] = [pix[0], pix[1], pix[2]];
+                    let best_index = nearest_match(pix, &PALETTE256[..]);
+                    data[i] = best_index;
                 }
             }
         }
@@ -264,6 +285,44 @@ impl IconElement {
                 }
                 Ok(image)
             }
+            Encoding::Palette4 => {
+                let num_bytes = (width * height) / 2;
+                if self.data.len() != num_bytes as usize {
+                    let msg = format!(
+                        "wrong data payload length ({} instead of {})",
+                        self.data.len(),
+                        num_bytes
+                    );
+                    return Err(Error::new(ErrorKind::InvalidData, msg));
+                }
+                let mut image = Image::new(PixelFormat::RGB, width, height);
+                let out = image.data_mut();
+                for (i, b) in self.data.iter().enumerate() {
+                    let (hi, lo) = ((*b >> 4) & 0xf, *b & 0xf);
+                    out[6 * i..6 * i + 3]
+                        .copy_from_slice(&PALETTE16[hi as usize]);
+                    out[6 * i + 3..6 * i + 6]
+                        .copy_from_slice(&PALETTE16[lo as usize]);
+                }
+                Ok(image)
+            }
+            Encoding::Palette8 => {
+                let num_bytes = width * height;
+                if self.data.len() != num_bytes as usize {
+                    let msg = format!(
+                        "wrong data payload length ({} instead of {})",
+                        self.data.len(),
+                        num_bytes
+                    );
+                    return Err(Error::new(ErrorKind::InvalidData, msg));
+                }
+                let mut image = Image::new(PixelFormat::RGB, width, height);
+                let out = image.data_mut();
+                for (o, b) in out.chunks_exact_mut(3).zip(self.data.iter()) {
+                    o.copy_from_slice(&PALETTE256[*b as usize]);
+                }
+                Ok(image)
+            }
         }
     }
 
@@ -287,7 +346,6 @@ impl IconElement {
             let msg = format!("icon type {:?} does not use a mask", icon_type);
             Error::new(ErrorKind::InvalidInput, msg)
         })?;
-        assert_eq!(icon_type.encoding(), Encoding::RLE24);
         if mask.ostype != mask_type.ostype() {
             let msg = format!("wrong OSType for mask ('{}' instead of '{}')",
                               mask.ostype,
@@ -296,20 +354,52 @@ impl IconElement {
         }
         let width = icon_type.pixel_width();
         let height = icon_type.pixel_height();
-        let num_pixels = (width * height) as usize;
-        if mask.data.len() != num_pixels {
-            let msg = format!("wrong mask data payload length ({} instead \
-                               of {})",
-                              mask.data.len(),
-                              num_pixels);
-            return Err(Error::new(ErrorKind::InvalidInput, msg));
+
+        match mask_type.encoding() {
+            Encoding::Mask8 => {
+                let num_pixels = (width * height) as usize;
+                if mask.data.len() != num_pixels {
+                    let msg = format!(
+                        "wrong mask data payload length ({} instead \
+                                    of {})",
+                        mask.data.len(),
+                        num_pixels
+                    );
+                    return Err(Error::new(ErrorKind::InvalidInput, msg));
+                }
+                let mut image = Image::new(PixelFormat::RGBA, width, height);
+                decode_rle(&self.data, 4, image.data_mut())?;
+                for (i, &alpha) in mask.data.iter().enumerate() {
+                    image.data_mut()[4 * i + 3] = alpha;
+                }
+                Ok(image)
+            }
+            Encoding::MonoA => {
+                let num_bytes = ((width * height) / 4) as usize;
+                if mask.data.len() != num_bytes {
+                    let msg = format!(
+                        "wrong mask data payload length ({} instead of {})",
+                        mask.data.len(),
+                        num_bytes
+                    );
+                    return Err(Error::new(ErrorKind::InvalidInput, msg));
+                }
+                let image = self.decode_image()?;
+                let mut image = image.convert_to(PixelFormat::RGBA);
+
+                let (_, alpha) = mask.data.split_at(num_bytes / 2);
+
+                let image_data = image.data_mut();
+                for (i, b) in alpha.iter().enumerate() {
+                    for d in 0..8 {
+                        image_data[32 * i + 4 * d + 3] =
+                            0xff * ((b >> (7 - d)) & 0x1)
+                    }
+                }
+                Ok(image)
+            }
+            _ => unreachable!(),
         }
-        let mut image = Image::new(PixelFormat::RGBA, width, height);
-        decode_rle(&self.data, 4, image.data_mut())?;
-        for (i, &alpha) in mask.data.iter().enumerate() {
-            image.data_mut()[4 * i + 3] = alpha;
-        }
-        Ok(image)
     }
 
     /// Returns the type of icon encoded by this element, or `None` if this
@@ -454,6 +544,28 @@ fn decode_rle(input: &[u8],
 
 fn rle_error() -> Error {
     Error::new(ErrorKind::InvalidData, "invalid RLE-compressed data")
+}
+
+// Find the index of a color value in `palette` close to `rgb`
+fn nearest_match(rgb: [u8; 3], palette: &[[u8; 3]]) -> u8 {
+    // A fast and simple color distance estimate, but not perceptually
+    // or physically accurate
+    fn color_distance(rgb: [u8; 3], pal: [u8; 3]) -> u16 {
+        u16::from(rgb[0].abs_diff(pal[0]))
+            + u16::from(rgb[1].abs_diff(pal[1]))
+            + u16::from(rgb[2].abs_diff(pal[2]))
+    }
+
+    let mut best_idx = 0;
+    let mut best_dist = color_distance(rgb, palette[0]);
+    for (i, c) in palette.iter().enumerate().skip(1) {
+        let dist = color_distance(rgb, *c);
+        if dist < best_dist {
+            best_idx = i;
+            best_dist = dist;
+        }
+    }
+    best_idx as u8
 }
 
 #[cfg(test)]

@@ -25,6 +25,26 @@ fn encode_icm() {
 }
 
 #[test]
+fn decode_icm4() {
+    decoder_test("icm4.icns", IconType::Palette4_16x12, "icm4.png");
+}
+
+#[test]
+fn encode_icm4() {
+    encoder_test("icm4.png", IconType::Palette4_16x12, "icm4.icns");
+}
+
+#[test]
+fn decode_icm8() {
+    decoder_test("icm8.icns", IconType::Palette8_16x12, "icm8.png");
+}
+
+#[test]
+fn encode_icm8() {
+    encoder_test("icm8.png", IconType::Palette8_16x12, "icm8.icns");
+}
+
+#[test]
 fn decode_is32() {
     decoder_test("is32.icns", IconType::RGB24_16x16, "16x16.png");
 }

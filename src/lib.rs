@@ -145,3 +145,5 @@ pub use self::icontype::{Encoding, IconType, OSType};
 
 mod image;
 pub use self::image::{Image, PixelFormat};
+
+mod palette;

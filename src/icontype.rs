@@ -19,18 +19,34 @@ pub enum IconType {
     MonoA_32x32,
     /// 16x12 1-bit icon with alpha
     MonoA_16x12,
+    /// 16x12 4-bit icon (without alpha)
+    Palette4_16x12,
+    /// 16x12 8-bit icon (without alpha)
+    Palette8_16x12,
     /// 16x16 1-bit icon with alpha
     MonoA_16x16,
-    /// 48x48 1-bit icon with alpha
-    MonoA_48x48,
+    /// 16x16 4-bit icon (without alpha)
+    Palette4_16x16,
+    /// 16x16 8-bit icon (without alpha)
+    Palette8_16x16,
     /// 16x16 24-bit icon (without alpha).
     RGB24_16x16,
     /// 16x16 8-bit alpha mask.
     Mask8_16x16,
+    /// 32x32 4-bit icon (without alpha)
+    Palette4_32x32,
+    /// 32x32 8-bit icon (without alpha)
+    Palette8_32x32,
     /// 32x32 24-bit icon (without alpha).
     RGB24_32x32,
     /// 32x32 8-bit alpha mask.
     Mask8_32x32,
+    /// 48x48 1-bit icon with alpha
+    MonoA_48x48,
+    /// 48x48 8-bit icon (without alpha)
+    Palette4_48x48,
+    /// 48x48 8-bit icon (without alpha)
+    Palette8_48x48,
     /// 48x48 24-bit icon (without alpha).
     RGB24_48x48,
     /// 48x48 8-bit alpha mask.
@@ -72,12 +88,20 @@ impl IconType {
             b"ICON" => Some(IconType::Mono_32x32),
             b"ICN#" => Some(IconType::MonoA_32x32),
             b"icm#" => Some(IconType::MonoA_16x12),
+            b"icm4" => Some(IconType::Palette4_16x12),
+            b"icm8" => Some(IconType::Palette8_16x12),
             b"ics#" => Some(IconType::MonoA_16x16),
+            b"ics4" => Some(IconType::Palette4_16x16),
+            b"ics8" => Some(IconType::Palette8_16x16),
             b"is32" => Some(IconType::RGB24_16x16),
             b"s8mk" => Some(IconType::Mask8_16x16),
+            b"icl4" => Some(IconType::Palette4_32x32),
+            b"icl8" => Some(IconType::Palette8_32x32),
             b"il32" => Some(IconType::RGB24_32x32),
             b"l8mk" => Some(IconType::Mask8_32x32),
             b"ich#" => Some(IconType::MonoA_48x48),
+            b"ich4" => Some(IconType::Palette4_48x48),
+            b"ich8" => Some(IconType::Palette8_48x48),
             b"ih32" => Some(IconType::RGB24_48x48),
             b"h8mk" => Some(IconType::Mask8_48x48),
             b"it32" => Some(IconType::RGB24_128x128),
@@ -166,12 +190,20 @@ impl IconType {
             IconType::Mono_32x32 => OSType(*b"ICON"),
             IconType::MonoA_32x32 => OSType(*b"ICN#"),
             IconType::MonoA_16x12 => OSType(*b"icm#"),
+            IconType::Palette4_16x12 => OSType(*b"icm4"),
+            IconType::Palette8_16x12 => OSType(*b"icm8"),
             IconType::MonoA_16x16 => OSType(*b"ics#"),
+            IconType::Palette4_16x16 => OSType(*b"ics4"),
+            IconType::Palette8_16x16 => OSType(*b"ics8"),
             IconType::RGB24_16x16 => OSType(*b"is32"),
             IconType::Mask8_16x16 => OSType(*b"s8mk"),
+            IconType::Palette4_32x32 => OSType(*b"icl4"),
+            IconType::Palette8_32x32 => OSType(*b"icl8"),
             IconType::RGB24_32x32 => OSType(*b"il32"),
             IconType::Mask8_32x32 => OSType(*b"l8mk"),
             IconType::MonoA_48x48 => OSType(*b"ich#"),
+            IconType::Palette4_48x48 => OSType(*b"ich4"),
+            IconType::Palette8_48x48 => OSType(*b"ich8"),
             IconType::RGB24_48x48 => OSType(*b"ih32"),
             IconType::Mask8_48x48 => OSType(*b"h8mk"),
             IconType::RGB24_128x128 => OSType(*b"it32"),
@@ -201,6 +233,10 @@ impl IconType {
     /// ```
     pub fn is_mask(self) -> bool {
         matches!(self,
+                 IconType::MonoA_16x12 |
+                 IconType::MonoA_16x16 |
+                 IconType::MonoA_32x32 |
+                 IconType::MonoA_48x48 |
                  IconType::Mask8_16x16 |
                  IconType::Mask8_32x32 |
                  IconType::Mask8_48x48 |
@@ -221,8 +257,20 @@ impl IconType {
     /// ```
     pub fn mask_type(self) -> Option<IconType> {
         match self {
+            IconType::Palette4_16x12 | IconType::Palette8_16x12 => {
+                Some(IconType::MonoA_16x12)
+            }
+            IconType::Palette4_16x16 | IconType::Palette8_16x16 => {
+                Some(IconType::MonoA_16x16)
+            }
             IconType::RGB24_16x16 => Some(IconType::Mask8_16x16),
+            IconType::Palette4_32x32 | IconType::Palette8_32x32 => {
+                Some(IconType::MonoA_32x32)
+            }
             IconType::RGB24_32x32 => Some(IconType::Mask8_32x32),
+            IconType::Palette4_48x48 | IconType::Palette8_48x48 => {
+                Some(IconType::MonoA_48x48)
+            }
             IconType::RGB24_48x48 => Some(IconType::Mask8_48x48),
             IconType::RGB24_128x128 => Some(IconType::Mask8_128x128),
             _ => None,
@@ -296,12 +344,20 @@ impl IconType {
             IconType::Mono_32x32 => 32,
             IconType::MonoA_32x32 => 32,
             IconType::MonoA_16x12 => 16,
+            IconType::Palette4_16x12 => 16,
+            IconType::Palette8_16x12 => 16,
             IconType::MonoA_16x16 => 16,
+            IconType::Palette4_16x16 => 16,
+            IconType::Palette8_16x16 => 16,
             IconType::RGB24_16x16 => 16,
             IconType::Mask8_16x16 => 16,
+            IconType::Palette4_32x32 => 32,
+            IconType::Palette8_32x32 => 32,
             IconType::RGB24_32x32 => 32,
             IconType::Mask8_32x32 => 32,
             IconType::MonoA_48x48 => 48,
+            IconType::Palette4_48x48 => 48,
+            IconType::Palette8_48x48 => 48,
             IconType::RGB24_48x48 => 48,
             IconType::Mask8_48x48 => 48,
             IconType::RGB24_128x128 => 128,
@@ -336,11 +392,19 @@ impl IconType {
             IconType::Mono_32x32 => 32,
             IconType::MonoA_32x32 => 32,
             IconType::MonoA_16x12 => 12,
+            IconType::Palette4_16x12 => 12,
+            IconType::Palette8_16x12 => 12,
             IconType::MonoA_16x16 => 16,
+            IconType::Palette4_16x16 => 16,
+            IconType::Palette8_16x16 => 16,
             IconType::RGB24_16x16 => 16,
             IconType::Mask8_16x16 => 16,
+            IconType::Palette4_32x32 => 32,
+            IconType::Palette8_32x32 => 32,
             IconType::RGB24_32x32 => 32,
             IconType::Mask8_32x32 => 32,
+            IconType::Palette4_48x48 => 48,
+            IconType::Palette8_48x48 => 48,
             IconType::MonoA_48x48 => 48,
             IconType::RGB24_48x48 => 48,
             IconType::Mask8_48x48 => 48,
@@ -368,6 +432,14 @@ impl IconType {
             IconType::MonoA_16x12 |
             IconType::MonoA_16x16 |
             IconType::MonoA_48x48 => Encoding::MonoA,
+            IconType::Palette4_16x12 |
+            IconType::Palette4_16x16 |
+            IconType::Palette4_32x32 |
+            IconType::Palette4_48x48 => Encoding::Palette4,
+            IconType::Palette8_16x12 |
+            IconType::Palette8_16x16 |
+            IconType::Palette8_32x32 |
+            IconType::Palette8_48x48 => Encoding::Palette8,
             IconType::RGB24_16x16 |
             IconType::RGB24_32x32 |
             IconType::RGB24_48x48 |
@@ -454,6 +526,10 @@ pub enum Encoding {
     Mono,
     /// Icon element data payload is an uncompressed one bit image with a one bit mask
     MonoA,
+    /// Icon element data payload is an uncompressed image with a fixed 4-bit color palette
+    Palette4,
+    /// Icon element data payload is an uncompressed image with a fixed 8-bit color palette
+    Palette8,
     /// Icon element data payload is an uncompressed 8-bit alpha mask.
     Mask8,
     /// Icon element data payload is an RLE-compressed 24-bit RGB image.
@@ -467,16 +543,24 @@ mod tests {
     use super::*;
     use std::str::FromStr;
 
-    const ALL_ICON_TYPES: [IconType; 24] = [
+    const ALL_ICON_TYPES: [IconType; 32] = [
         IconType::Mono_32x32,
         IconType::MonoA_32x32,
         IconType::MonoA_16x12,
+        IconType::Palette4_16x12,
+        IconType::Palette8_16x12,
         IconType::MonoA_16x16,
+        IconType::Palette4_16x16,
+        IconType::Palette8_16x16,
         IconType::RGB24_16x16,
         IconType::Mask8_16x16,
+        IconType::Palette4_32x32,
+        IconType::Palette8_32x32,
         IconType::RGB24_32x32,
         IconType::Mask8_32x32,
         IconType::MonoA_48x48,
+        IconType::Palette4_48x48,
+        IconType::Palette8_48x48,
         IconType::RGB24_48x48,
         IconType::Mask8_48x48,
         IconType::RGB24_128x128,
@@ -533,7 +617,7 @@ mod tests {
     fn icon_type_mask_type() {
         for icon_type in &ALL_ICON_TYPES {
             match icon_type.encoding() {
-                Encoding::Mask8 => {
+                Encoding::MonoA | Encoding::Mask8 => {
                     assert!(icon_type.is_mask());
                     assert_eq!(icon_type.mask_type(), None);
                 }
@@ -549,9 +633,25 @@ mod tests {
                         panic!("{:?} is missing a mask type", icon_type);
                     }
                 }
-                Encoding::Mono | Encoding::MonoA | Encoding::JP2PNG => {
+                Encoding::Mono | Encoding::JP2PNG => {
                     assert!(!icon_type.is_mask());
                     assert_eq!(icon_type.mask_type(), None);
+                }
+                Encoding::Palette4 | Encoding::Palette8 => {
+                    assert!(!icon_type.is_mask());
+                    if let Some(mask_type) = icon_type.mask_type() {
+                        assert_eq!(mask_type.encoding(), Encoding::MonoA);
+                        assert_eq!(
+                            icon_type.pixel_width(),
+                            mask_type.pixel_width()
+                        );
+                        assert_eq!(
+                            icon_type.pixel_height(),
+                            mask_type.pixel_height()
+                        );
+                    } else {
+                        panic!("{:?} is missing a mask type", icon_type);
+                    }
                 }
             }
         }
