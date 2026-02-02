@@ -94,6 +94,12 @@ fn encode_ic11() {
     encoder_test("32x32.png", IconType::RGBA32_16x16_2x, "ic11.icns");
 }
 
+#[cfg(feature = "jp2io")]
+#[test]
+fn decode_ic12() {
+    decoder_test("ic12.icns", IconType::RGBA32_32x32_2x, "64x64.png");
+}
+
 fn decoder_test(icns_name: &str, icon_type: IconType, png_name: &str) {
     let family = load_icns_file(icns_name).unwrap();
     let image = family.get_icon_with_type(icon_type).unwrap();
