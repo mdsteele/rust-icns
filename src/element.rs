@@ -90,7 +90,7 @@ impl IconElement {
             }
             Encoding::Mono => {
                 let image = image.convert_to(PixelFormat::Gray);
-                assert!(image.data().len() % 8 == 0);
+                assert!(image.data().len().is_multiple_of(8));
                 data = vec![0; image.data.len() / 8];
                 for (i, e) in image.into_data().iter().enumerate() {
                     // Arbitrarily threshold gray values to black and white
@@ -101,7 +101,7 @@ impl IconElement {
             }
             Encoding::MonoA => {
                 let image = image.convert_to(PixelFormat::GrayAlpha);
-                assert!(image.data().len() % 16 == 0);
+                assert!(image.data().len().is_multiple_of(16));
                 data = vec![0; image.data.len() / 8];
                 let (mono, alpha) = data.split_at_mut(image.data.len() / 16);
                 for (i, e) in image.into_data().chunks_exact(2).enumerate() {
@@ -179,7 +179,7 @@ impl IconElement {
                 Ok(image)
             }
             Encoding::Mono => {
-                assert!(width * height % 8 == 0);
+                assert!((width * height).is_multiple_of(8));
                 let num_bytes = (width * height) / 8;
                 if self.data.len() != num_bytes as usize {
                     let msg = format!(
@@ -200,7 +200,7 @@ impl IconElement {
                 Ok(image)
             }
             Encoding::MonoA => {
-                assert!(width * height % 8 == 0);
+                assert!((width * height).is_multiple_of(8));
                 let num_bytes = (width * height) / 4;
                 if self.data.len() != num_bytes as usize {
                     let msg = format!(
