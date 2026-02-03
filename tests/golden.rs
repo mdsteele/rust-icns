@@ -94,6 +94,24 @@ fn encode_ic11() {
     encoder_test("32x32.png", IconType::RGBA32_16x16_2x, "ic11.icns");
 }
 
+#[test]
+fn decode_ic13() {
+    decoder_test("ic13.icns", IconType::RGBA32_128x128_2x, "256x256.png");
+}
+
+#[test]
+fn decode_ic08(){
+    decoder_test("ic08.icns", IconType::RGBA32_256x256, "256x256.png");
+}
+
+#[test]
+fn decode_jpeg2000_256x256() {
+    decoder_test("loom.icns", IconType::RGBA32_512x512, "loom-512x512.png");
+}
+
+
+
+
 fn decoder_test(icns_name: &str, icon_type: IconType, png_name: &str) {
     let family = load_icns_file(icns_name).unwrap();
     let image = family.get_icon_with_type(icon_type).unwrap();

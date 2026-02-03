@@ -137,14 +137,41 @@ impl IconElement {
         let width = icon_type.pixel_width();
         let height = icon_type.pixel_height();
         match icon_type.encoding() {
-            #[cfg(feature = "pngio")]
             Encoding::JP2PNG => {
+                let image: Image;
                 if self.data.starts_with(&JPEG_2000_FILE_MAGIC_NUMBER) {
-                    let msg = "element to be decoded contains JPEG 2000 \
-                               data, which is not yet supported";
-                    return Err(Error::new(ErrorKind::InvalidInput, msg));
+                    let j2k_image = match jpeg2k::Image::from_bytes(&self.data) {
+                        Ok(image) => image,
+                        Err(e) => {
+                            return Err(io::Error::new(
+                                io::ErrorKind::InvalidData,
+                                e,
+                            ))
+                        }
+                    };
+                    let alpha_default = 255u8; // Full opacity
+                    let pixels =
+                        j2k_image.get_pixels(Some(alpha_default)).map_err(
+                            |e| io::Error::new(io::ErrorKind::InvalidData, e),
+                        )?;
+
+                    let pixel_format = match pixels.format {
+                        jpeg2k::ImageFormat::L8 => PixelFormat::Gray,
+                        jpeg2k::ImageFormat::La8 => PixelFormat::GrayAlpha,
+                        jpeg2k::ImageFormat::Rgb8 => PixelFormat::RGB,
+                        jpeg2k::ImageFormat::Rgba8 => PixelFormat::RGBA,
+                    };
+
+                    image = Image::from_data(
+                        pixel_format,
+                        pixels.width,
+                        pixels.height,
+                        pixels.data,
+                    )?;
+                } else {
+                    image = Image::read_png(io::Cursor::new(&self.data))?;
                 }
-                let image = Image::read_png(io::Cursor::new(&self.data))?;
+                
                 if image.width() != width || image.height() != height {
                     let msg = format!("decoded PNG has wrong dimensions \
                                        ({}x{} instead of {}x{})",
