@@ -5,6 +5,26 @@ use std::fs::File;
 use std::io::{self, BufReader};
 
 #[test]
+fn decode_icon() {
+    decoder_test("icon.icns", IconType::Mono_32x32, "icon.png");
+}
+
+#[test]
+fn encode_icon() {
+    encoder_test("icon.png", IconType::Mono_32x32, "icon.icns");
+}
+
+#[test]
+fn decode_icm() {
+    decoder_test("icm#.icns", IconType::MonoA_16x12, "icm#.png");
+}
+
+#[test]
+fn encode_icm() {
+    encoder_test("icm#.png", IconType::MonoA_16x12, "icm#.icns");
+}
+
+#[test]
 fn decode_is32() {
     decoder_test("is32.icns", IconType::RGB24_16x16, "16x16.png");
 }

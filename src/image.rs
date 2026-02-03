@@ -23,7 +23,7 @@ impl Image {
     /// Creates a new image with all pixel data set to zero.
     pub fn new(format: PixelFormat, width: u32, height: u32) -> Image {
         let data_bits = format.bits_per_pixel() * width * height;
-        let data_bytes = ((data_bits + 7) / 8) as usize;
+        let data_bytes = data_bits.div_ceil(8) as usize;
         Image {
             format,
             width,
@@ -40,7 +40,7 @@ impl Image {
                      data: Vec<u8>)
                      -> io::Result<Image> {
         let data_bits = format.bits_per_pixel() * width * height;
-        let data_bytes = ((data_bits + 7) / 8) as usize;
+        let data_bytes = data_bits.div_ceil(8) as usize;
         if data.len() == data_bytes {
             Ok(Image {
                 format,

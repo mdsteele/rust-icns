@@ -64,12 +64,12 @@ a pull request.
 
 | OSType | Description                             | Supported? |
 |--------|-----------------------------------------|------------|
-| `ICON` | 32×32 1-bit icon                        | No         |
-| `ICN#` | 32×32 1-bit icon with 1-bit mask        | No         |
-| `icm#` | 16×12 1-bit icon with 1-bit mask        | No         |
+| `ICON` | 32×32 1-bit icon                        | Yes        |
+| `ICN#` | 32×32 1-bit icon with 1-bit mask        | Yes        |
+| `icm#` | 16×12 1-bit icon with 1-bit mask        | Yes        |
 | `icm4` | 16×12 4-bit icon                        | No         |
 | `icm8` | 16×12 8-bit icon                        | No         |
-| `ics#` | 16×16 1-bit mask                        | No         |
+| `ics#` | 16×16 1-bit icon with 1-bit mask        | Yes        |
 | `ics4` | 16×16 4-bit icon                        | No         |
 | `ics8` | 16x16 8-bit icon                        | No         |
 | `is32` | 16×16 24-bit icon                       | Yes        |
@@ -78,7 +78,7 @@ a pull request.
 | `icl8` | 32×32 8-bit icon                        | No         |
 | `il32` | 32x32 24-bit icon                       | Yes        |
 | `l8mk` | 32×32 8-bit mask                        | Yes        |
-| `ich#` | 48×48 1-bit mask                        | No         |
+| `ich#` | 48×48 1-bit mask                        | Yes        |
 | `ich4` | 48×48 4-bit icon                        | No         |
 | `ich8` | 48×48 8-bit icon                        | No         |
 | `ih32` | 48×48 24-bit icon                       | Yes        |
