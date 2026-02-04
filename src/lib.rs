@@ -88,9 +88,9 @@
 //! as JPEG 2000 data; however, when encoding icons, this library always uses
 //! PNG format.
 //!
-//! Additionally, this library does not yet support many of the older icon
-//! types used by earlier versions of Mac OS (such as `ICN#`, a 32x32 black and
-//! white icon).  Again, pull requests (with suitable tests) are welcome.
+//! Additionally, this library does not yet support a few of the newer icon
+//! types used by later versions of Mac OS (such as `ic04`, which can contain
+//! a custom ARGB subformat).  Pull requests (with suitable tests) are welcome.
 //!
 //! # Example usage
 //!
@@ -145,3 +145,5 @@ pub use self::icontype::{Encoding, IconType, OSType};
 
 mod image;
 pub use self::image::{Image, PixelFormat};
+
+mod palette;
