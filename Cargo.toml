@@ -10,7 +10,7 @@ readme = "README.md"
 
 [dependencies]
 byteorder = "1"
-png = { version = "0.16", optional = true }
+png = { version = "0.18", optional = true }
 hayro-jpeg2000 = { version = "0.3.1", default-features = false, features = ["std", "simd"], optional = true}
 
 [features]
