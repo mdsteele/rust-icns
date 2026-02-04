@@ -9,9 +9,13 @@ use super::image::{Image, PixelFormat};
 const ICON_ELEMENT_HEADER_LENGTH: u32 = 8;
 
 /// The first twelve bytes of a JPEG 2000 file are always this:
-#[cfg(feature = "pngio")]
-const JPEG_2000_FILE_MAGIC_NUMBER: [u8; 12] =
-    [0x00, 0x00, 0x00, 0x0C, 0x6A, 0x50, 0x20, 0x20, 0x0D, 0x0A, 0x87, 0x0A];
+const JPEG_2000_FILE_MAGIC_NUMBER: [u8; 12] = [
+    0x00, 0x00, 0x00, 0x0C, 0x6A, 0x50, 0x20, 0x20, 0x0D, 0x0A, 0x87, 0x0A,
+];
+
+/// The first eight bytes of a PNG file are always this:
+const PNG_FILE_MAGIC_NUMBER: [u8; 8] =
+    [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
 /// One data block in an ICNS file.  Depending on the resource type, this may
 /// represent an icon, or part of an icon (such as an alpha mask, or color
@@ -137,27 +141,57 @@ impl IconElement {
         let width = icon_type.pixel_width();
         let height = icon_type.pixel_height();
         match icon_type.encoding() {
-            #[cfg(feature = "pngio")]
             Encoding::JP2PNG => {
+                #[cfg(feature = "jp2io")]
+                if self.data.starts_with(&JPEG_2000_FILE_MAGIC_NUMBER) {
+                    let image = Image::read_jp2(&self.data)?;
+                    if image.width() != width || image.height() != height {
+                        let msg = format!(
+                            "decoded JPEG 2000 has wrong dimensions \
+                            ({}x{} instead of {}x{})",
+                            image.width(),
+                            image.height(),
+                            width,
+                            height
+                        );
+                        return Err(Error::new(ErrorKind::InvalidData, msg));
+                    }
+                    return Ok(image);
+                }
+                #[cfg(not(feature = "jp2io"))]
                 if self.data.starts_with(&JPEG_2000_FILE_MAGIC_NUMBER) {
                     let msg = "element to be decoded contains JPEG 2000 \
-                               data, which is not yet supported";
+                        data, which requires the feature `jp2io` to be decoded";
                     return Err(Error::new(ErrorKind::InvalidInput, msg));
                 }
-                let image = Image::read_png(io::Cursor::new(&self.data))?;
-                if image.width() != width || image.height() != height {
-                    let msg = format!("decoded PNG has wrong dimensions \
-                                       ({}x{} instead of {}x{})",
-                                      image.width(),
-                                      image.height(),
-                                      width,
-                                      height);
-                    return Err(Error::new(ErrorKind::InvalidData, msg));
+
+                #[cfg(feature = "pngio")]
+                if self.data.starts_with(&PNG_FILE_MAGIC_NUMBER) {
+                    let image = Image::read_png(io::Cursor::new(&self.data))?;
+                    if image.width() != width || image.height() != height {
+                        let msg = format!(
+                            "decoded PNG has wrong dimensions \
+                            ({}x{} instead of {}x{})",
+                            image.width(),
+                            image.height(),
+                            width,
+                            height
+                        );
+                        return Err(Error::new(ErrorKind::InvalidData, msg));
+                    }
+                    return Ok(image);
                 }
-                Ok(image)
+                #[cfg(not(feature = "pngio"))]
+                if self.data.starts_with(&PNG_FILE_MAGIC_NUMBER) {
+                    let msg = "element to be decoded contains PNG \
+                        data, which requires the feature `pngio` to be decoded";
+                    return Err(Error::new(ErrorKind::InvalidInput, msg));
+                }
+
+                let msg = "element to be decoded contains neither JPEG 2000 \
+                    nor PNG data";
+                Err(Error::new(ErrorKind::InvalidInput, msg))
             }
-            #[cfg(not(feature = "pngio"))]
-            Encoding::JP2PNG => unimplemented!(),
             Encoding::RLE24 => {
                 let mut image = Image::new(PixelFormat::RGB, width, height);
                 decode_rle(&self.data, 3, image.data_mut())?;

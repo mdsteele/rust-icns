@@ -11,7 +11,9 @@ readme = "README.md"
 [dependencies]
 byteorder = "1"
 png = { version = "0.16", optional = true }
+hayro-jpeg2000 = { version = "0.3.1", default-features = false, features = ["std", "simd"], optional = true}
 
 [features]
-default = ["pngio"]
+default = ["pngio", "jp2io"]
 pngio = ["png"]
+jp2io = ["hayro-jpeg2000"]
