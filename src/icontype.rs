@@ -11,7 +11,7 @@ use std::fmt;
 /// [decode](struct.IconFamily.html#method.get_icon_with_type) complete icons
 /// that consist of multiple `IconElements`.
 #[allow(non_camel_case_types)]
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum IconType {
     /// 32x32 1-bit icon (without alpha)
     Mono_32x32,
@@ -520,7 +520,7 @@ impl std::str::FromStr for OSType {
 /// (This type is used internally by the library, but is irrelvant to most
 /// library users; if you're not sure whether you need to use it, you probably
 /// don't.)
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub enum Encoding {
     /// Icon element data payload is an uncompressed one bit image
     Mono,

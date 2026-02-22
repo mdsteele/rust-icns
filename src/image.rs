@@ -160,7 +160,7 @@ impl Image {
 /// first, followed by the rest of the top row from left to right; then comes
 /// the second row down, again from left to right, and so on until finally the
 /// bottom-right pixel comes last).
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub enum PixelFormat {
     /// 32-bit color with alpha channel.  Each pixel is four bytes, with red
     /// first and alpha last.
