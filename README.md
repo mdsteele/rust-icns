@@ -51,8 +51,8 @@ fn main() {
 ICNS files can contain a number of different icon types.  This library supports
 the most commonly-used types, but some of the newer ones are not yet supported.
 The table below indicates which types are currently supported; see
-https://en.wikipedia.org/wiki/Apple_Icon_Image_format#Icon_types for more
-information about each type.
+https://en.wikipedia.org/wiki/Apple_Icon_Image_format#Icon_types and
+https://github.com/relikd/icns-analysis for more information about each type.
 
 
 | OSType | Description                                | Supported? |

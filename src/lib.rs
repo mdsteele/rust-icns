@@ -4,9 +4,10 @@
 //!
 //! To understand this library, it helps to be familiar with the structure of
 //! an ICNS file; this section will give a high-level overview, or see
-//! [Wikipedia](https://en.wikipedia.org/wiki/Apple_Icon_Image_format) for more
-//! details about the file format.  If you prefer to learn by example, you can
-//! just skip down to the [Example usage](#example-usage) section below.
+//! [Wikipedia](https://en.wikipedia.org/wiki/Apple_Icon_Image_format) or [this
+//! analysis](https://github.com/relikd/icns-analysis) for more details about
+//! the file format.  If you prefer to learn by example, you can just skip down
+//! to the [Example usage](#example-usage) section below.
 //!
 //! An ICNS file encodes a collection of images (typically different versions
 //! of the same icon at different resolutions) called an _icon family_.  The
