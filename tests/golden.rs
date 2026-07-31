@@ -120,6 +120,16 @@ fn decode_ic12() {
     decoder_test("ic12.icns", IconType::RGBA32_32x32_2x, "64x64.png");
 }
 
+#[test]
+fn decode_icsb() {
+    decoder_test("icsb.icns", IconType::RGBA32_18x18, "18x18.png");
+}
+
+#[test]
+fn encode_icsb() {
+    encoder_test("18x18.png", IconType::RGBA32_18x18, "icsb.icns");
+}
+
 fn decoder_test(icns_name: &str, icon_type: IconType, png_name: &str) {
     let family = load_icns_file(icns_name).unwrap();
     let image = family.get_icon_with_type(icon_type).unwrap();
