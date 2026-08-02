@@ -18,6 +18,9 @@ const JPEG_2000_FILE_MAGIC_NUMBER: [u8; 12] = [
 const PNG_FILE_MAGIC_NUMBER: [u8; 8] =
     [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
+/// The first four bytes of an ARGB-encoded entry are always this:
+const ARGB_MAGIC_NUMBER : [u8; 4] = *b"ARGB";
+
 /// One data block in an ICNS file.  Depending on the resource type, this may
 /// represent an icon, or part of an icon (such as an alpha mask, or color
 /// data without the mask).
@@ -63,6 +66,12 @@ impl IconElement {
         }
         let mut data: Vec<u8>;
         match icon_type.encoding() {
+            Encoding::ARGB => {
+                let image = image.convert_to(PixelFormat::RGBA);
+                let num_pixels = (width * height) as usize;
+                data = encode_rgba_to_rle_argb(image.data(), num_pixels)
+            }
+
             #[cfg(feature = "pngio")]
             Encoding::JP2PNG => {
                 data = Vec::new();
@@ -143,6 +152,52 @@ impl IconElement {
         Ok(IconElement::new(icon_type.ostype(), data))
     }
 
+    #[cfg(feature = "jp2io")]
+    fn decode_jp2(&self, width: u32, height: u32) -> io::Result<Image> {
+        let image = Image::read_jp2(&self.data)?;
+        if image.width() != width || image.height() != height {
+            let msg = format!(
+                "decoded JPEG 2000 has wrong dimensions ({}x{} instead of {}x{})",
+                image.width(),
+                image.height(),
+                width,
+                height
+            );
+            return Err(Error::new(ErrorKind::InvalidData, msg));
+        }
+        Ok(image)
+    }
+
+    #[cfg(not(feature = "jp2io"))]
+    fn decode_jp2(&self, _width: u32, _height: u32) -> io::Result<Image> {
+        let msg = "element to be decoded contains JPEG 2000 \
+            data, which requires the feature `jp2io` to be decoded";
+        Err(Error::new(ErrorKind::InvalidInput, msg))
+    }
+
+    #[cfg(feature = "pngio")]
+    fn decode_png(&self, width: u32, height: u32) -> io::Result<Image> {
+        let image = Image::read_png(io::Cursor::new(&self.data))?;
+        if image.width() != width || image.height() != height {
+            let msg = format!(
+                "decoded PNG has wrong dimensions ({}x{} instead of {}x{})",
+                image.width(),
+                image.height(),
+                width,
+                height
+            );
+            return Err(Error::new(ErrorKind::InvalidData, msg));
+        }
+        Ok(image)
+    }
+
+    #[cfg(not(feature = "pngio"))]
+    fn decode_png(&self, _width: u32, _height: u32) -> io::Result<Image> {
+        let msg = "element to be decoded contains PNG \
+            data, which requires the feature `pngio` to be decoded";
+        Err(Error::new(ErrorKind::InvalidInput, msg))
+    }
+
     /// Decodes the icon element into an image.  Returns an error if this
     /// element does not represent an icon type supported by this library, or
     /// if the data is malformed.
@@ -162,53 +217,30 @@ impl IconElement {
         let width = icon_type.pixel_width();
         let height = icon_type.pixel_height();
         match icon_type.encoding() {
+            Encoding::ARGB => {
+                if self.data.starts_with(&ARGB_MAGIC_NUMBER) {
+                    let mut image = Image::new(PixelFormat::RGBA, width, height);
+                    decode_rle_argb_to_rgba(&self.data[4..], image.data_mut())?;
+                    return Ok(image);
+                }
+
+                if self.data.starts_with(&JPEG_2000_FILE_MAGIC_NUMBER) {
+                    return self.decode_jp2(width, height);
+                }
+                if self.data.starts_with(&PNG_FILE_MAGIC_NUMBER) {
+                    return self.decode_png(width, height);
+                }
+                let msg = "element to be decoded contains neither ARGB nor \
+                    JPEG 2000 nor PNG data";
+                Err(Error::new(ErrorKind::InvalidInput, msg))
+            }
             Encoding::JP2PNG => {
-                #[cfg(feature = "jp2io")]
                 if self.data.starts_with(&JPEG_2000_FILE_MAGIC_NUMBER) {
-                    let image = Image::read_jp2(&self.data)?;
-                    if image.width() != width || image.height() != height {
-                        let msg = format!(
-                            "decoded JPEG 2000 has wrong dimensions \
-                            ({}x{} instead of {}x{})",
-                            image.width(),
-                            image.height(),
-                            width,
-                            height
-                        );
-                        return Err(Error::new(ErrorKind::InvalidData, msg));
-                    }
-                    return Ok(image);
+                    return self.decode_jp2(width, height);
                 }
-                #[cfg(not(feature = "jp2io"))]
-                if self.data.starts_with(&JPEG_2000_FILE_MAGIC_NUMBER) {
-                    let msg = "element to be decoded contains JPEG 2000 \
-                        data, which requires the feature `jp2io` to be decoded";
-                    return Err(Error::new(ErrorKind::InvalidInput, msg));
-                }
-
-                #[cfg(feature = "pngio")]
                 if self.data.starts_with(&PNG_FILE_MAGIC_NUMBER) {
-                    let image = Image::read_png(io::Cursor::new(&self.data))?;
-                    if image.width() != width || image.height() != height {
-                        let msg = format!(
-                            "decoded PNG has wrong dimensions \
-                            ({}x{} instead of {}x{})",
-                            image.width(),
-                            image.height(),
-                            width,
-                            height
-                        );
-                        return Err(Error::new(ErrorKind::InvalidData, msg));
-                    }
-                    return Ok(image);
+                    return self.decode_png(width, height);
                 }
-                #[cfg(not(feature = "pngio"))]
-                if self.data.starts_with(&PNG_FILE_MAGIC_NUMBER) {
-                    let msg = "element to be decoded contains PNG \
-                        data, which requires the feature `pngio` to be decoded";
-                    return Err(Error::new(ErrorKind::InvalidInput, msg));
-                }
-
                 let msg = "element to be decoded contains neither JPEG 2000 \
                     nor PNG data";
                 Err(Error::new(ErrorKind::InvalidInput, msg))
@@ -450,14 +482,39 @@ fn encode_rle(input: &[u8],
         output.extend_from_slice(&[0, 0, 0, 0]);
     }
     for channel in 0..3 {
-        let mut pixel: usize = 0;
-        let mut literal_start: usize = 0;
-        while pixel < num_pixels {
-            let value = input[num_input_channels * pixel + channel];
-            let mut run_length = 1;
-            while pixel + run_length < num_pixels &&
-                  input[num_input_channels * (pixel + run_length) +
-                  channel] == value && run_length < 130 {
+        encode_rle_component(input, num_pixels, channel, num_input_channels, &mut output);
+    }
+    output
+}
+
+fn encode_rgba_to_rle_argb(input: &[u8],
+                           num_pixels: usize)
+                           -> Vec<u8> {
+    let mut output = Vec::new();
+    output.extend_from_slice(&ARGB_MAGIC_NUMBER);
+    encode_rle_component(input, num_pixels, 3, 4, &mut output);
+    encode_rle_component(input, num_pixels, 0, 4, &mut output);
+    encode_rle_component(input, num_pixels, 1, 4, &mut output);
+    encode_rle_component(input, num_pixels, 2, 4, &mut output);
+    output
+}
+
+fn encode_rle_component(input: &[u8],
+                        num_pixels: usize,
+                        channel: usize,
+                        num_input_channels: usize,
+                        output: &mut Vec<u8>) {
+    assert!(num_input_channels == 3 || num_input_channels == 4);
+    assert!(channel <= num_input_channels);
+
+    let mut pixel: usize = 0;
+    let mut literal_start: usize = 0;
+    while pixel < num_pixels {
+        let value = input[num_input_channels * pixel + channel];
+        let mut run_length = 1;
+        while pixel + run_length < num_pixels &&
+            input[num_input_channels * (pixel + run_length) +
+            channel] == value && run_length < 130 {
                 run_length += 1;
             }
             if run_length >= 3 {
@@ -478,18 +535,16 @@ fn encode_rle(input: &[u8],
             } else {
                 pixel += run_length;
             }
-        }
-        while literal_start < pixel {
-            let literal_length = cmp::min(128, pixel - literal_start);
-            output.push((literal_length - 1) as u8);
-            for i in 0..literal_length {
-                output.push(input[num_input_channels * (literal_start + i) +
-                            channel]);
-            }
-            literal_start += literal_length;
-        }
     }
-    output
+    while literal_start < pixel {
+        let literal_length = cmp::min(128, pixel - literal_start);
+        output.push((literal_length - 1) as u8);
+        for i in 0..literal_length {
+            output.push(input[num_input_channels * (literal_start + i) +
+            channel]);
+        }
+        literal_start += literal_length;
+    }
 }
 
 fn decode_rle(input: &[u8],
@@ -508,38 +563,73 @@ fn decode_rle(input: &[u8],
     };
     let input = &input[skip..input.len()];
     let mut iter = input.iter();
-    let mut remaining: usize = 0;
-    let mut within_run = false;
-    let mut run_value: u8 = 0;
     for channel in 0..3 {
-        for pixel in 0..num_pixels {
-            if remaining == 0 {
-                let next: u8 = *iter.next().ok_or_else(rle_error)?;
-                if next < 128 {
-                    remaining = (next as usize) + 1;
-                    within_run = false;
-                } else {
-                    remaining = (next as usize) - 125;
-                    within_run = true;
-                    run_value = *iter.next().ok_or_else(rle_error)?;
-                }
-            }
-            output[num_output_channels * pixel + channel] = if within_run {
-                run_value
-            } else {
-                *iter.next().ok_or_else(rle_error)?
-            };
-            remaining -= 1;
-        }
-        if remaining != 0 {
-            return Err(rle_error());
-        }
+        decode_rle_component(&mut iter, num_pixels, channel, num_output_channels, output)?;
     }
     if iter.next().is_some() {
         Err(rle_error())
     } else {
         Ok(())
     }
+}
+
+fn decode_rle_argb_to_rgba(input: &[u8],
+                           output: &mut [u8])
+                           -> io::Result<()> {
+    assert_eq!(output.len() % 4, 0);
+    let num_pixels = output.len() / 4;
+    let input = &input[..input.len()];
+    let mut iter = input.iter();
+
+    decode_rle_component(&mut iter, num_pixels, 3, 4, output)?;
+    decode_rle_component(&mut iter, num_pixels, 0, 4, output)?;
+    decode_rle_component(&mut iter, num_pixels, 1, 4, output)?;
+    decode_rle_component(&mut iter, num_pixels, 2, 4, output)?;
+
+    if iter.next().is_some() {
+        Err(rle_error())
+    } else {
+        Ok(())
+    }
+}
+
+fn decode_rle_component(iter: &mut std::slice::Iter<u8>,
+                        num_pixels: usize, channel: usize,
+                        num_output_channels: usize,
+                        output: &mut [u8])
+                        -> io::Result<()> {
+    assert!(num_output_channels == 3 || num_output_channels == 4);
+    assert!(channel < num_output_channels);
+    assert!(num_output_channels.checked_mul(num_pixels) == Some(output.len()));
+
+    let mut remaining: usize = 0;
+    let mut within_run = false;
+    let mut run_value: u8 = 0;
+
+    for pixel in 0..num_pixels {
+        if remaining == 0 {
+            let next: u8 = *iter.next().ok_or_else(rle_error)?;
+            if next < 128 {
+                remaining = (next as usize) + 1;
+                within_run = false;
+            } else {
+                remaining = (next as usize) - 125;
+                within_run = true;
+                run_value = *iter.next().ok_or_else(rle_error)?;
+            }
+        }
+        output[num_output_channels * pixel + channel] = if within_run {
+            run_value
+        } else {
+            *iter.next().ok_or_else(rle_error)?
+        };
+
+        remaining -= 1;
+    }
+    if remaining != 0 {
+        return Err(rle_error());
+    }
+    Ok(())
 }
 
 fn rle_error() -> Error {

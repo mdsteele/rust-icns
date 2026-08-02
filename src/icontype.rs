@@ -78,6 +78,18 @@ pub enum IconType {
     RGBA32_512x512,
     /// 512x512 32-bit icon at 2x "retina" density (so, 1024 by 1024 pixels).
     RGBA32_512x512_2x,
+    /// 16x16 32-bit icon, ARGB format variant.
+    RGBA32_16x16_ARGB,
+    /// 16x16 32-bit icon at 2x "retina" density, ARGB format variant (so, 32 by 32 pixels).
+    RGBA32_16x16_2x_ARGB,
+    /// 18x18 32-bit icon.
+    RGBA32_18x18,
+    /// 18x18 32-bit icon at 2x "retina" density (so, 36 by 36 pixels).
+    RGBA32_18x18_2x,
+    /// 24x24 32-bit icon.
+    RGBA32_24x24,
+    /// 24x24 32-bit icon at 2x "retina" density (so, 48 by 48 pixels).
+    RGBA32_24x24_2x,
 }
 
 impl IconType {
@@ -117,6 +129,12 @@ impl IconType {
             b"ic14" => Some(IconType::RGBA32_256x256_2x),
             b"ic09" => Some(IconType::RGBA32_512x512),
             b"ic10" => Some(IconType::RGBA32_512x512_2x),
+            b"ic04" => Some(IconType::RGBA32_16x16_ARGB),
+            b"ic05" => Some(IconType::RGBA32_16x16_2x_ARGB),
+            b"icsb" => Some(IconType::RGBA32_18x18),
+            b"icsB" => Some(IconType::RGBA32_18x18_2x),
+            b"sb24" => Some(IconType::RGBA32_24x24),
+            b"SB24" => Some(IconType::RGBA32_24x24_2x),
             _ => None,
         }
     }
@@ -138,7 +156,10 @@ impl IconType {
         match (width, height) {
             (16, 12) => Some(IconType::MonoA_16x12),
             (16, 16) => Some(IconType::RGB24_16x16),
+            (18, 18) => Some(IconType::RGBA32_18x18),
+            (24, 24) => Some(IconType::RGBA32_24x24),
             (32, 32) => Some(IconType::RGB24_32x32),
+            (36, 36) => Some(IconType::RGBA32_18x18_2x),
             (48, 48) => Some(IconType::RGB24_48x48),
             (64, 64) => Some(IconType::RGBA32_64x64),
             (128, 128) => Some(IconType::RGB24_128x128),
@@ -169,8 +190,12 @@ impl IconType {
         match (width, height, density) {
             (16, 12, 1) => Some(IconType::MonoA_16x12),
             (16, 16, 1) => Some(IconType::RGB24_16x16),
+            (18, 18, 1) => Some(IconType::RGBA32_18x18),
+            (24, 24, 1) => Some(IconType::RGBA32_24x24),
             (32, 32, 1) => Some(IconType::RGB24_32x32),
             (32, 32, 2) => Some(IconType::RGBA32_16x16_2x),
+            (36, 36, 2) => Some(IconType::RGBA32_18x18_2x),
+            (48, 48, 2) => Some(IconType::RGBA32_24x24_2x),
             (48, 48, 1) => Some(IconType::RGB24_48x48),
             (64, 64, 1) => Some(IconType::RGBA32_64x64),
             (64, 64, 2) => Some(IconType::RGBA32_32x32_2x),
@@ -219,6 +244,12 @@ impl IconType {
             IconType::RGBA32_256x256_2x => OSType(*b"ic14"),
             IconType::RGBA32_512x512 => OSType(*b"ic09"),
             IconType::RGBA32_512x512_2x => OSType(*b"ic10"),
+            IconType::RGBA32_16x16_ARGB => OSType(*b"ic04"),
+            IconType::RGBA32_16x16_2x_ARGB => OSType(*b"ic05"),
+            IconType::RGBA32_18x18 => OSType(*b"icsb"),
+            IconType::RGBA32_18x18_2x => OSType(*b"icsB"),
+            IconType::RGBA32_24x24 => OSType(*b"sb24"),
+            IconType::RGBA32_24x24_2x => OSType(*b"SB24"),
         }
     }
 
@@ -320,6 +351,9 @@ impl IconType {
     pub fn pixel_density(self) -> u32 {
         match self {
             IconType::RGBA32_16x16_2x |
+            IconType::RGBA32_16x16_2x_ARGB |
+            IconType::RGBA32_18x18_2x |
+            IconType::RGBA32_24x24_2x |
             IconType::RGBA32_32x32_2x |
             IconType::RGBA32_128x128_2x |
             IconType::RGBA32_256x256_2x |
@@ -373,6 +407,12 @@ impl IconType {
             IconType::RGBA32_256x256_2x => 256,
             IconType::RGBA32_512x512 => 512,
             IconType::RGBA32_512x512_2x => 512,
+            IconType::RGBA32_16x16_ARGB => 16,
+            IconType::RGBA32_16x16_2x_ARGB => 16,
+            IconType::RGBA32_18x18 => 18,
+            IconType::RGBA32_18x18_2x => 18,
+            IconType::RGBA32_24x24 => 24,
+            IconType::RGBA32_24x24_2x => 24,
         }
     }
 
@@ -421,6 +461,12 @@ impl IconType {
             IconType::RGBA32_256x256_2x => 256,
             IconType::RGBA32_512x512 => 512,
             IconType::RGBA32_512x512_2x => 512,
+            IconType::RGBA32_16x16_ARGB => 16,
+            IconType::RGBA32_16x16_2x_ARGB => 16,
+            IconType::RGBA32_18x18 => 18,
+            IconType::RGBA32_18x18_2x => 18,
+            IconType::RGBA32_24x24 => 24,
+            IconType::RGBA32_24x24_2x => 24,
         }
     }
 
@@ -458,7 +504,13 @@ impl IconType {
             IconType::RGBA32_256x256 |
             IconType::RGBA32_256x256_2x |
             IconType::RGBA32_512x512 |
-            IconType::RGBA32_512x512_2x => Encoding::JP2PNG,
+            IconType::RGBA32_512x512_2x |
+            IconType::RGBA32_18x18_2x |
+            IconType::RGBA32_24x24 |
+            IconType::RGBA32_24x24_2x => Encoding::JP2PNG,
+            IconType::RGBA32_16x16_ARGB |
+            IconType::RGBA32_16x16_2x_ARGB |
+            IconType::RGBA32_18x18 => Encoding::ARGB,
         }
     }
 }
@@ -536,6 +588,9 @@ pub enum Encoding {
     RLE24,
     /// Icon element data payload is a JPEG 2000 or PNG file.
     JP2PNG,
+    /// Icon element data payload is typically an RLE-compressed 32-bit ARGB image,
+    /// but may also contain a JPEG 2000 or PNG file.
+    ARGB
 }
 
 #[cfg(test)]
@@ -543,7 +598,7 @@ mod tests {
     use super::*;
     use std::str::FromStr;
 
-    const ALL_ICON_TYPES: [IconType; 32] = [
+    const ALL_ICON_TYPES: [IconType; 38] = [
         IconType::Mono_32x32,
         IconType::MonoA_32x32,
         IconType::MonoA_16x12,
@@ -576,6 +631,12 @@ mod tests {
         IconType::RGBA32_256x256_2x,
         IconType::RGBA32_512x512,
         IconType::RGBA32_512x512_2x,
+        IconType::RGBA32_16x16_ARGB,
+        IconType::RGBA32_16x16_2x_ARGB,
+        IconType::RGBA32_18x18,
+        IconType::RGBA32_18x18_2x,
+        IconType::RGBA32_24x24,
+        IconType::RGBA32_24x24_2x,
     ];
 
     #[test]
@@ -633,7 +694,7 @@ mod tests {
                         panic!("{:?} is missing a mask type", icon_type);
                     }
                 }
-                Encoding::Mono | Encoding::JP2PNG => {
+                Encoding::Mono | Encoding::JP2PNG | Encoding::ARGB => {
                     assert!(!icon_type.is_mask());
                     assert_eq!(icon_type.mask_type(), None);
                 }

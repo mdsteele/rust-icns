@@ -90,8 +90,9 @@
 //! PNG format.
 //!
 //! Additionally, this library does not yet support a few of the newer icon
-//! types used by later versions of Mac OS (such as `ic04`, which can contain
-//! a custom ARGB subformat).  Pull requests (with suitable tests) are welcome.
+//! entry variants used by later versions of Mac OS, which may contain metadata
+//! (like `info`) or nested files (like `slct` or `sbtp`).  Pull requests
+//! (with suitable tests) are welcome.
 //!
 //! # Example usage
 //!
