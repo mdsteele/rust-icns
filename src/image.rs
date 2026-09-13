@@ -21,9 +21,19 @@ pub struct Image {
 
 impl Image {
     /// Creates a new image with all pixel data set to zero.
+    ///
+    /// Panics if the required memory exceeds isize::MAX, and on
+    /// allocation failure.
     pub fn new(format: PixelFormat, width: u32, height: u32) -> Image {
-        let data_bits = format.bits_per_pixel() * width * height;
-        let data_bytes = data_bits.div_ceil(8) as usize;
+        assert!(format.bits_per_pixel().is_multiple_of(8));
+        let bytes_per_pixel = format.bits_per_pixel() / 8;
+
+        let data_bytes = (width as usize)
+            .checked_mul(height as usize)
+            .and_then(|s| s.checked_mul(bytes_per_pixel as usize))
+            .filter(|s| *s <= isize::MAX as usize)
+            .expect("image size should be <= isize::MAX");
+
         Image {
             format,
             width,
@@ -39,8 +49,15 @@ impl Image {
                      height: u32,
                      data: Vec<u8>)
                      -> io::Result<Image> {
-        let data_bits = format.bits_per_pixel() * width * height;
-        let data_bytes = data_bits.div_ceil(8) as usize;
+        assert!(format.bits_per_pixel().is_multiple_of(8));
+        let bytes_per_pixel = format.bits_per_pixel() / 8;
+
+        let data_bytes = (width as usize)
+            .saturating_mul(height as usize)
+            .saturating_mul(bytes_per_pixel as usize);
+
+        // A Vec's len will always be <= isize::MAX < usize::MAX, so this
+        // is never true if the size overflows
         if data.len() == data_bytes {
             Ok(Image {
                 format,
@@ -50,7 +67,7 @@ impl Image {
             })
         } else {
             let msg = format!("incorrect pixel data array length for \
-                               speicifed format and dimensions ({} instead \
+                               specified format and dimensions ({} instead \
                                of {})",
                               data.len(),
                               data_bytes);
