@@ -140,7 +140,12 @@ impl IconFamily {
         let mut family = IconFamily::new();
         while file_position < file_length {
             let element = IconElement::read(reader.by_ref())?;
-            file_position += element.total_length();
+            let Some(next_pos) =
+                file_position.checked_add(element.total_length())
+            else {
+                break;
+            };
+            file_position = next_pos;
             family.elements.push(element);
         }
         Ok(family)
