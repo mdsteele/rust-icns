@@ -1,5 +1,5 @@
+use super::image::{Image, PixelFormat};
 use hayro_jpeg2000::{self, ColorSpace};
-use image::{Image, PixelFormat};
 use std::io;
 
 impl Image {

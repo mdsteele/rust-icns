@@ -1,5 +1,4 @@
-use image::{Image, PixelFormat};
-use png;
+use super::image::{Image, PixelFormat};
 use std::io::{self, BufRead, Seek, Write};
 
 impl Image {
